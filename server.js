@@ -1,6 +1,6 @@
 const express=require("express"),http=require("http"),{WebSocketServer}=require("ws"),path=require("path");
 const app=express(),server=http.createServer(app),wss=new WebSocketServer({server});
-app.use(express.static(__dirname));app.get("/", (req,res)=>{
+app.use(express.static(__dirname));
   res.sendFile(path.join(__dirname,"index.html"));
 });
 const rooms=new Map(),MAX=8,S=["♠","♥","♦","♣"],R=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
