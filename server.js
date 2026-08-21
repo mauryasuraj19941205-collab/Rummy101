@@ -1,10 +1,6 @@
 const express=require("express"),http=require("http"),{WebSocketServer}=require("ws"),path=require("path");
+const app=express(),server=http.createServer(app),wss=new WebSocketServer({server});
 app.use(express.static(__dirname));
-res.sendFile(path.join(__dirname,"index.html"));
-});
-app.use(express.static(__dirname));
-  res.sendFile(path.join(__dirname,"index.html"));
-});
 const rooms=new Map(),MAX=8,S=["♠","♥","♦","♣"],R=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
 const send=(w,x)=>w.readyState===1&&w.send(JSON.stringify(x)),code=()=>Math.random().toString(36).slice(2,8).toUpperCase();
 const rv=r=>r==="A"?1:["J","Q","K"].includes(r)?({J:11,Q:12,K:13}[r]):+r;
