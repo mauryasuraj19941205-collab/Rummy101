@@ -2,13 +2,12 @@
 <html lang="hi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
 <title>Rummy 101</title>
 
 <style>
-*{
-  box-sizing:border-box
-}
+*{box-sizing:border-box}
 
 body{
   margin:0;
@@ -22,17 +21,13 @@ body:before{
   position:fixed;
   inset:0;
   pointer-events:none;
-  background:radial-gradient(
-    circle at 50% -10%,
-    #1a5545 0,
-    transparent 35%
-  )
+  background:radial-gradient(circle at 50% -10%,#1a5545 0,transparent 35%)
 }
 
 .w{
   max-width:760px;
   margin:auto;
-  padding:10px 12px 22px
+  padding:10px 12px 28px
 }
 
 .top{
@@ -54,6 +49,15 @@ body:before{
   letter-spacing:1.5px
 }
 
+.badge{
+  font-size:10px;
+  color:#06110d;
+  background:#4be0b2;
+  border-radius:999px;
+  padding:7px 10px;
+  font-weight:900
+}
+
 .b{
   background:linear-gradient(145deg,#10191a,#0b1214);
   border:1px solid #27403d;
@@ -63,8 +67,7 @@ body:before{
   box-shadow:0 12px 35px #0008
 }
 
-input,
-button{
+input,button{
   padding:13px;
   border-radius:13px;
   border:1px solid #304a46;
@@ -84,26 +87,16 @@ input:focus{
 }
 
 button{
-  background:linear-gradient(
-    135deg,
-    #19d2a1,
-    #0fae88
-  );
+  background:linear-gradient(135deg,#19d2a1,#0fae88);
   color:#03110d;
   font-weight:900;
-  box-shadow:0 5px 15px #0bb98b33;
-  cursor:pointer
+  box-shadow:0 5px 15px #0bb98b33
 }
 
 button:disabled{
-  opacity:.35;
-  cursor:not-allowed;
-  box-shadow:none
-}
-
-.secondary{
-  background:#182526;
-  color:#d9e8e4
+  opacity:.45;
+  box-shadow:none;
+  cursor:not-allowed
 }
 
 .row{
@@ -121,7 +114,7 @@ button:disabled{
   font-weight:950;
   letter-spacing:5px;
   color:#61e4bd;
-  margin:4px 0 8px
+  margin:5px 0 8px
 }
 
 .ps{
@@ -136,15 +129,11 @@ button:disabled{
   padding:9px;
   font-size:12px;
   border:1px solid #263c3a;
-  min-height:68px
+  min-height:58px
 }
 
 .p b{
   font-size:13px
-}
-
-.p.me{
-  border-color:#16c79a
 }
 
 .p.out{
@@ -152,24 +141,8 @@ button:disabled{
   text-decoration:line-through
 }
 
-.p.offline{
-  opacity:.6
-}
-
-.ok{
-  color:#4be3b0
-}
-
-.warn{
-  color:#ffd166
-}
-
-.error{
-  color:#ff6b7a
-}
-
 .t{
-  min-height:330px;
+  height:310px;
   border-radius:24px;
   background:radial-gradient(
     circle at 50% 45%,
@@ -182,8 +155,7 @@ button:disabled{
   align-items:center;
   justify-content:center;
   border:1px solid #1e5b4d;
-  box-shadow:inset 0 0 50px #0008;
-  overflow:hidden
+  box-shadow:inset 0 0 50px #0008
 }
 
 .center{
@@ -203,27 +175,14 @@ button:disabled{
 }
 
 .center .small{
-  font-weight:500
+  font-weight:500;
+  color:#9fb3ae
 }
 
-.discard{
-  margin-top:10px;
-  font-size:13px;
-  color:#a9c1bb
-}
-
-.discard-card{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:5px;
-  min-width:58px;
-  padding:6px 10px;
-  margin-top:5px;
-  border-radius:10px;
-  background:#fffdf5;
-  color:#18201f;
-  font-weight:900
+.turn{
+  color:#4be3b0;
+  font-size:12px;
+  margin-top:6px
 }
 
 .seat{
@@ -233,7 +192,7 @@ button:disabled{
   border-radius:12px;
   padding:7px 9px;
   font-size:10px;
-  min-width:82px;
+  min-width:72px;
   text-align:center;
   box-shadow:0 4px 12px #0007
 }
@@ -241,8 +200,8 @@ button:disabled{
 .seat.turn{
   border-color:#16c79a;
   box-shadow:
-    0 0 0 2px #16c79a44,
-    0 4px 15px #0008
+    0 0 0 1px #16c79a44,
+    0 4px 12px #0007
 }
 
 .s0{
@@ -287,19 +246,13 @@ button:disabled{
   transform:translateX(50%)
 }
 
-.hand-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:4px
-}
-
 .hand{
   display:flex;
   gap:6px;
   overflow:auto;
   padding:12px 2px 8px;
-  scrollbar-width:none
+  scrollbar-width:none;
+  min-height:96px
 }
 
 .hand::-webkit-scrollbar{
@@ -309,11 +262,7 @@ button:disabled{
 .c{
   flex:0 0 52px;
   height:76px;
-  background:linear-gradient(
-    145deg,
-    #fffdf5,
-    #e8e4d8
-  );
+  background:linear-gradient(145deg,#fffdf5,#e8e4d8);
   color:#18201f;
   border-radius:10px;
   text-align:center;
@@ -345,35 +294,6 @@ button:disabled{
   font-size:23px
 }
 
-.chat{
-  height:110px;
-  overflow:auto;
-  background:#070d0f;
-  border-radius:12px;
-  padding:9px;
-  font-size:12px;
-  border:1px solid #1d302e
-}
-
-.status{
-  margin-top:8px;
-  padding:8px 10px;
-  border-radius:10px;
-  background:#071011;
-  border:1px solid #203633;
-  font-size:12px;
-  text-align:center
-}
-
-.badge{
-  font-size:10px;
-  color:#06110d;
-  background:#4be0b2;
-  border-radius:999px;
-  padding:4px 8px;
-  font-weight:900
-}
-
 .small{
   font-size:12px;
   color:#9fb3ae;
@@ -387,37 +307,59 @@ button:disabled{
   margin-bottom:7px
 }
 
-.hide{
-  display:none!important
-}
-
-.notice{
-  padding:10px;
-  border-radius:12px;
-  margin:8px 0;
+.statusline{
   font-size:12px;
-  text-align:center
+  color:#9fb3ae;
+  margin-top:4px
 }
 
-.notice.ok{
-  background:#07382d;
-  border:1px solid #146d59
+.statusline.good{
+  color:#4be3b0
 }
 
-.notice.warn{
-  background:#3b2d05;
-  border:1px solid #735d15
+.statusline.bad{
+  color:#ff8c8c
 }
 
-.notice.error{
-  background:#3b0c15;
-  border:1px solid #751c2b
+.chat{
+  height:110px;
+  overflow:auto;
+  background:#070d0f;
+  border-radius:12px;
+  padding:9px;
+  font-size:12px;
+  border:1px solid #1d302e
+}
+
+.hide{
+  display:none
+}
+
+.divider{
+  height:1px;
+  background:#1d302e;
+  margin:10px 0
+}
+
+.discardWrap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px
+}
+
+.discardCard{
+  flex:0 0 52px
+}
+
+.muted{
+  color:#78908b;
+  font-size:12px
 }
 
 @media(max-width:420px){
-
   .t{
-    min-height:300px
+    height:285px
   }
 
   .c{
@@ -430,6 +372,14 @@ button:disabled{
     padding:6px;
     font-size:9px
   }
+
+  .brand{
+    font-size:20px
+  }
+
+  .code{
+    font-size:27px
+  }
 }
 </style>
 </head>
@@ -439,6 +389,7 @@ button:disabled{
 <div class="w">
 
   <div class="top">
+
     <div>
       <div class="tag">
         8 PLAYER • REAL-TIME ARENA
@@ -452,6 +403,7 @@ button:disabled{
     <div class="badge">
       101 POINTS
     </div>
+
   </div>
 
 
@@ -461,28 +413,32 @@ button:disabled{
 
     <input
       id="name"
-      maxlength="18"
       placeholder="आपका नाम"
-      autocomplete="name"
+      autocomplete="nickname"
     >
 
-    <button id="createBtn">
-      Create Room
-    </button>
+    <div class="row">
+      <button onclick="createRoom()">
+        Create Room
+      </button>
+    </div>
 
     <input
       id="code"
-      maxlength="6"
       placeholder="Room code"
       autocomplete="off"
-      autocapitalize="characters"
     >
 
-    <button id="joinBtn">
-      Join Room
-    </button>
+    <div class="row">
+      <button onclick="joinRoom()">
+        Join Room
+      </button>
+    </div>
 
-    <div id="homeStatus"></div>
+    <div
+      id="homeStatus"
+      class="statusline"
+    ></div>
 
   </div>
 
@@ -491,25 +447,46 @@ button:disabled{
 
   <div id="game" class="hide">
 
+    <!-- ROOM -->
+
     <div class="b">
 
       <div class="titleline">
+
         <span>Room</span>
-        <span id="connectionBadge" class="badge">
-          CONNECTING
+
+        <span
+          id="roomBadge"
+          class="badge"
+        >
+          WAITING
         </span>
+
       </div>
 
-      <div id="rc" class="code">
+      <div
+        id="roomCode"
+        class="code"
+      >
         ------
       </div>
 
-      <button id="readyBtn">
-        READY UP
-      </button>
+      <div class="row">
 
-      <div id="st" class="status">
-        Connecting...
+        <button
+          id="readyBtn"
+          onclick="toggleReady()"
+        >
+          READY UP
+        </button>
+
+      </div>
+
+      <div
+        id="statusText"
+        class="statusline"
+      >
+        Waiting for players…
       </div>
 
     </div>
@@ -520,13 +497,22 @@ button:disabled{
     <div class="b">
 
       <div class="titleline">
+
         <b>Players</b>
-        <span id="playerCount" class="small">
+
+        <span
+          id="playerCount"
+          class="muted"
+        >
           0/8
         </span>
+
       </div>
 
-      <div id="ps" class="ps"></div>
+      <div
+        id="players"
+        class="ps"
+      ></div>
 
     </div>
 
@@ -535,7 +521,10 @@ button:disabled{
 
     <div class="b">
 
-      <div class="t" id="table">
+      <div
+        id="table"
+        class="t"
+      >
 
         <div class="center">
 
@@ -551,8 +540,24 @@ button:disabled{
             100+ points = eliminated
           </div>
 
-          <div id="discardInfo" class="discard">
-            Discard: —
+          <div
+            id="turnText"
+            class="turn"
+          ></div>
+
+          <div class="divider"></div>
+
+          <div class="discardWrap">
+
+            <span class="muted">
+              Discard:
+            </span>
+
+            <div
+              id="discardCard"
+              class="discardCard"
+            ></div>
+
           </div>
 
         </div>
@@ -562,42 +567,57 @@ button:disabled{
     </div>
 
 
-    <!-- HAND -->
+    <!-- HAND / ACTIONS -->
 
     <div class="b">
 
-      <div class="hand-title">
+      <div class="titleline">
+
         <b>Your Hand</b>
-        <span id="handCount" class="small">
+
+        <span
+          id="handCount"
+          class="muted"
+        >
           0 cards
         </span>
+
       </div>
 
-      <div id="hand" class="hand"></div>
-
-      <div id="actionStatus" class="status">
-        Waiting...
-      </div>
+      <div
+        id="hand"
+        class="hand"
+      ></div>
 
       <div class="row">
 
-        <button id="drawBtn">
+        <button
+          id="drawBtn"
+          onclick="drawCard()"
+        >
           DRAW
         </button>
 
-        <button id="discardBtn">
+        <button
+          id="discardBtn"
+          onclick="discardCard()"
+        >
           DISCARD
         </button>
 
-        <button id="declareBtn">
+        <button
+          id="declareBtn"
+          onclick="declareGame()"
+        >
           DECLARE
         </button>
 
       </div>
 
-      <button id="endTurnBtn" class="secondary">
-        END TURN
-      </button>
+      <div
+        id="actionStatus"
+        class="statusline"
+      ></div>
 
     </div>
 
@@ -609,10 +629,12 @@ button:disabled{
       <b>Scoring</b>
 
       <div class="small">
-        Round खत्म होने पर winner को 0 points मिलते हैं।
-        बाकी खिलाड़ियों के unmatched cards के points उनके
-        score में जुड़ते हैं। 101 या उससे अधिक होने पर player
-        eliminate हो जाता है। आखिरी बचा player match winner है।
+
+        Round खत्म होने पर winner को 0 और बाकी खिलाड़ियों
+        के unmatched cards के points उनके score में जुड़ते हैं.
+        101 या उससे अधिक होने पर player eliminate हो जाता है.
+        आखिरी बचा player match winner है.
+
       </div>
 
     </div>
@@ -624,17 +646,19 @@ button:disabled{
 
       <b>Chat</b>
 
-      <div id="chatbox" class="chat"></div>
+      <div
+        id="chatbox"
+        class="chat"
+      ></div>
 
       <div class="row">
 
         <input
-          id="msg"
-          maxlength="160"
+          id="message"
           placeholder="Message"
         >
 
-        <button id="chatBtn">
+        <button onclick="sendChat()">
           Send
         </button>
 
@@ -648,1003 +672,873 @@ button:disabled{
 
 
 <script>
-"use strict";
-
-/*
-  RUMMY 101 CLIENT
-  - automatic reconnect
-  - session resume
-  - room persistence
-  - safer UI
-*/
 
 let socket = null;
-let myHand = [];
+let state = null;
+let handCards = [];
 let selectedIndex = -1;
 
-let currentState = null;
+let mySessionId =
+  localStorage.getItem("rummy101_session") || "";
+
+let myRoomCode =
+  localStorage.getItem("rummy101_room") || "";
+
+let myName =
+  localStorage.getItem("rummy101_name") || "";
 
 let reconnectTimer = null;
-let reconnectAttempts = 0;
-let manuallyClosed = false;
+let reconnectAttempt = 0;
+let manualClose = false;
 
-const STORAGE = {
-  token: "rummy101_token",
-  room: "rummy101_room",
-  name: "rummy101_name"
-};
+window.lastDrawn = false;
 
-const $ = id => document.getElementById(id);
-
-const home = $("home");
-const game = $("game");
-
-const nameInput = $("name");
-const codeInput = $("code");
-
-const createBtn = $("createBtn");
-const joinBtn = $("joinBtn");
-const readyBtn = $("readyBtn");
-
-const drawBtn = $("drawBtn");
-const discardBtn = $("discardBtn");
-const declareBtn = $("declareBtn");
-const endTurnBtn = $("endTurnBtn");
-
-const chatBtn = $("chatBtn");
-const msgInput = $("msg");
-
-const rc = $("rc");
-const st = $("st");
-const ps = $("ps");
-const hand = $("hand");
-
-const handCount = $("handCount");
-const playerCount = $("playerCount");
-
-const actionStatus = $("actionStatus");
-const homeStatus = $("homeStatus");
-
-const connectionBadge = $("connectionBadge");
-const discardInfo = $("discardInfo");
-const table = $("table");
-const chatbox = $("chatbox");
+const $ = id =>
+  document.getElementById(id);
 
 
-/* ---------------------------
-   INITIAL LOAD
----------------------------- */
+if (myName) {
+  $("name").value = myName;
+}
 
-nameInput.value =
-  localStorage.getItem(STORAGE.name) || "";
-
-const savedRoom =
-  localStorage.getItem(STORAGE.room);
-
-const savedToken =
-  localStorage.getItem(STORAGE.token);
-
-if (savedRoom && savedToken) {
-  showGame();
-  rc.textContent = savedRoom;
-  setConnection("CONNECTING");
-  connect(true);
+if (myRoomCode) {
+  $("code").value = myRoomCode;
 }
 
 
-/* ---------------------------
-   CONNECTION
----------------------------- */
+function wsUrl() {
 
-function websocketUrl() {
-  const protocol =
+  return (
     location.protocol === "https:"
       ? "wss://"
-      : "ws://";
+      : "ws://"
+  ) + location.host;
 
-  return protocol + location.host;
 }
 
-function connect(isResume = false) {
 
-  if (
-    socket &&
-    (
-      socket.readyState === WebSocket.OPEN ||
-      socket.readyState === WebSocket.CONNECTING
-    )
-  ) {
-    return;
-  }
+function setStatus(
+  text,
+  good = false,
+  bad = false
+) {
 
-  manuallyClosed = false;
+  const el = $("homeStatus");
+
+  el.textContent = text || "";
+
+  el.className =
+    "statusline" +
+    (good ? " good" : "") +
+    (bad ? " bad" : "");
+
+}
+
+
+function connect(onOpen) {
+
+  clearTimeout(reconnectTimer);
+
+  manualClose = false;
 
   try {
-    socket = new WebSocket(websocketUrl());
-  } catch (err) {
-    scheduleReconnect();
-    return;
-  }
+    if (socket) socket.close();
+  } catch (_) {}
+
+  socket = new WebSocket(wsUrl());
+
 
   socket.onopen = () => {
 
-    reconnectAttempts = 0;
+    reconnectAttempt = 0;
 
-    setConnection("CONNECTED");
-
-    const token =
-      localStorage.getItem(STORAGE.token);
-
-    const room =
-      localStorage.getItem(STORAGE.room);
-
-    if (isResume && token && room) {
-
-      socket.send(JSON.stringify({
-        type: "resume",
-        token
-      }));
-
-    } else {
-
-      const pending =
-        sessionStorage.getItem("rummy101_pending");
-
-      if (pending) {
-
-        sessionStorage.removeItem(
-          "rummy101_pending"
-        );
-
-        const data =
-          JSON.parse(pending);
-
-        socket.send(JSON.stringify(data));
-      }
+    if (onOpen) {
+      onOpen();
+      return;
     }
+
+    if (
+      mySessionId &&
+      myRoomCode
+    ) {
+
+      send({
+        type: "resume",
+        code: myRoomCode,
+        sessionId: mySessionId
+      });
+
+    }
+
   };
 
 
   socket.onmessage = event => {
 
-    let message;
+    let msg;
 
     try {
-      message = JSON.parse(event.data);
+      msg = JSON.parse(event.data);
     } catch (_) {
       return;
     }
 
-    handleMessage(message);
+    handleMessage(msg);
+
   };
+
+
+  socket.onerror = () => {};
 
 
   socket.onclose = () => {
 
-    setConnection("DISCONNECTED");
+    socket = null;
 
-    if (!manuallyClosed) {
+    if (manualClose) return;
 
-      showConnectionNotice(
-        "Connection टूट गया। Reconnecting..."
+    if (
+      mySessionId &&
+      myRoomCode
+    ) {
+
+      const delay =
+        Math.min(
+          5000,
+          700 + reconnectAttempt * 700
+        );
+
+      reconnectAttempt++;
+
+      setStatus(
+        "Connection lost. Reconnecting…",
+        false,
+        true
       );
 
-      scheduleReconnect();
-    }
-  };
+      reconnectTimer =
+        setTimeout(
+          () => connect(),
+          delay
+        );
 
+    } else {
 
-  socket.onerror = () => {
-    setConnection("ERROR");
-  };
-}
-
-
-function scheduleReconnect() {
-
-  if (reconnectTimer) return;
-
-  reconnectAttempts++;
-
-  const delay =
-    Math.min(
-      1000 * Math.pow(2, reconnectAttempts - 1),
-      10000
-    );
-
-  reconnectTimer = setTimeout(() => {
-
-    reconnectTimer = null;
-
-    const token =
-      localStorage.getItem(STORAGE.token);
-
-    const room =
-      localStorage.getItem(STORAGE.room);
-
-    if (token && room) {
-      connect(true);
-    }
-
-  }, delay);
-}
-
-
-function setConnection(status) {
-
-  connectionBadge.textContent = status;
-
-  if (status === "CONNECTED") {
-    connectionBadge.style.background =
-      "#4be0b2";
-  } else if (status === "CONNECTING") {
-    connectionBadge.style.background =
-      "#ffd166";
-  } else {
-    connectionBadge.style.background =
-      "#ff6b7a";
-  }
-}
-
-
-function showConnectionNotice(text) {
-
-  actionStatus.textContent = text;
-}
-
-
-/* ---------------------------
-   MESSAGE HANDLER
----------------------------- */
-
-function handleMessage(m) {
-
-  if (m.type === "joined") {
-
-    localStorage.setItem(
-      STORAGE.room,
-      m.code
-    );
-
-    localStorage.setItem(
-      STORAGE.token,
-      m.token
-    );
-
-    rc.textContent = m.code;
-
-    showGame();
-
-    setConnection("CONNECTED");
-
-    if (!m.resumed) {
-      showConnectionNotice(
-        "Room joined successfully."
+      setStatus(
+        "Connection closed. Try again.",
+        false,
+        true
       );
+
     }
 
+  };
+
+}
+
+
+function send(message) {
+
+  if (
+    !socket ||
+    socket.readyState !== WebSocket.OPEN
+  ) {
+
+    setStatus(
+      "Connection अभी तैयार नहीं है. Reconnecting…",
+      false,
+      true
+    );
+
+    connect();
+
+    return false;
+  }
+
+  socket.send(
+    JSON.stringify(message)
+  );
+
+  return true;
+}
+
+
+function createRoom() {
+
+  const n =
+    $("name").value.trim();
+
+  if (!n) {
+
+    return setStatus(
+      "पहले अपना नाम डालें.",
+      false,
+      true
+    );
+
+  }
+
+  myName = n.slice(0, 18);
+
+  localStorage.setItem(
+    "rummy101_name",
+    myName
+  );
+
+  connect(() => {
+
+    send({
+      type: "create",
+      name: myName
+    });
+
+  });
+
+}
+
+
+function joinRoom() {
+
+  const n =
+    $("name").value.trim();
+
+  const c =
+    $("code").value
+      .trim()
+      .toUpperCase();
+
+  if (!n) {
+
+    return setStatus(
+      "पहले अपना नाम डालें.",
+      false,
+      true
+    );
+
+  }
+
+  if (!c) {
+
+    return setStatus(
+      "Room code डालें.",
+      false,
+      true
+    );
+
+  }
+
+  myName = n.slice(0, 18);
+
+  localStorage.setItem(
+    "rummy101_name",
+    myName
+  );
+
+  connect(() => {
+
+    send({
+      type: "join",
+      name: myName,
+      code: c
+    });
+
+  });
+
+}
+
+
+function handleMessage(msg) {
+
+  if (msg.type === "error") {
+
+    setStatus(
+      msg.message,
+      false,
+      true
+    );
+
+    $("actionStatus").textContent =
+      msg.message;
+
     return;
   }
 
 
-  if (m.type === "resume_failed") {
+  if (msg.type === "joined") {
 
-    localStorage.removeItem(
-      STORAGE.token
-    );
+    if (msg.sessionId) {
 
-    localStorage.removeItem(
-      STORAGE.room
-    );
+      mySessionId =
+        msg.sessionId;
 
-    showHome();
+      localStorage.setItem(
+        "rummy101_session",
+        mySessionId
+      );
 
-    setHomeStatus(
-      "पुराना room/session expire हो गया। नया room बनाएं या join करें।",
-      "warn"
-    );
-
-    return;
-  }
+    }
 
 
-  if (m.type === "state") {
+    if (msg.code) {
 
-    currentState = m.state;
+      myRoomCode =
+        msg.code;
 
-    renderState(m.state);
+      localStorage.setItem(
+        "rummy101_room",
+        myRoomCode
+      );
 
-    return;
-  }
-
-
-  if (m.type === "hand") {
-
-    myHand = Array.isArray(m.hand)
-      ? m.hand
-      : [];
-
-    selectedIndex = -1;
-
-    drawHand();
-
-    updateButtons(
-      m.permissions || {}
-    );
-
-    return;
-  }
+    }
 
 
-  if (m.type === "round_started") {
+    $("home")
+      .classList
+      .add("hide");
 
-    showConnectionNotice(
-      m.message || "Round started."
+    $("game")
+      .classList
+      .remove("hide");
+
+    $("roomCode").textContent =
+      myRoomCode;
+
+    setStatus(
+      "Connected",
+      true
     );
 
     return;
   }
 
 
-  if (m.type === "round_end") {
+  if (msg.type === "state") {
 
-    renderScores(m.scores);
+    state = msg.state;
+
+    renderState();
+
+    return;
+  }
+
+
+  if (msg.type === "hand") {
+
+    window.lastDrawn =
+      !!msg.drawn;
+
+    handCards =
+      Array.isArray(msg.hand)
+        ? msg.hand
+        : [];
+
+    if (
+      selectedIndex >=
+      handCards.length
+    ) {
+
+      selectedIndex = -1;
+
+    }
+
+    renderHand(msg);
+
+    return;
+  }
+
+
+  if (msg.type === "chat") {
+
+    $("chatbox").innerHTML +=
+      `<div>
+        <b>${esc(msg.name)}</b>:
+        ${esc(msg.text)}
+      </div>`;
+
+    $("chatbox").scrollTop =
+      $("chatbox").scrollHeight;
+
+    return;
+  }
+
+
+  if (msg.type === "round_end") {
 
     alert(
-      "🏆 Round Winner: " +
-      m.winner
+      "Round winner: " +
+      msg.winner
     );
 
     return;
   }
 
 
-  if (m.type === "match_end") {
+  if (msg.type === "match_end") {
 
     alert(
       "🏆 Match Winner: " +
-      m.winner
+      msg.winner
     );
 
-    return;
   }
 
-
-  if (m.type === "error") {
-
-    showError(m.message);
-
-    return;
-  }
-
-
-  if (m.type === "chat") {
-
-    appendChat(
-      m.name,
-      m.text
-    );
-
-    return;
-  }
 }
 
 
-/* ---------------------------
-   CREATE / JOIN
----------------------------- */
-
-createBtn.onclick = () => {
-
-  const playerName =
-    nameInput.value.trim();
-
-  if (!playerName) {
-    setHomeStatus(
-      "पहले अपना नाम डालें।",
-      "warn"
-    );
-    return;
-  }
-
-  saveName(playerName);
-
-  sessionStorage.setItem(
-    "rummy101_pending",
-    JSON.stringify({
-      type: "create",
-      name: playerName
-    })
-  );
-
-  showGame();
-  setConnection("CONNECTING");
-
-  connect(false);
-};
-
-
-joinBtn.onclick = () => {
-
-  const playerName =
-    nameInput.value.trim();
-
-  const roomCode =
-    codeInput.value.trim().toUpperCase();
-
-  if (!playerName) {
-
-    setHomeStatus(
-      "पहले अपना नाम डालें।",
-      "warn"
-    );
-
-    return;
-  }
-
-  if (!roomCode) {
-
-    setHomeStatus(
-      "Room code डालें।",
-      "warn"
-    );
-
-    return;
-  }
-
-  saveName(playerName);
-
-  sessionStorage.setItem(
-    "rummy101_pending",
-    JSON.stringify({
-      type: "join",
-      name: playerName,
-      code: roomCode
-    })
-  );
-
-  showGame();
-  rc.textContent = roomCode;
-
-  setConnection("CONNECTING");
-
-  connect(false);
-};
-
-
-function saveName(value) {
-  localStorage.setItem(
-    STORAGE.name,
-    value
-  );
-}
-
-
-/* ---------------------------
-   READY
----------------------------- */
-
-readyBtn.onclick = () => {
-
-  if (!socketOpen()) {
-    showError(
-      "Server से connection नहीं है। Reconnecting..."
-    );
-    connect(true);
-    return;
-  }
-
-  socket.send(JSON.stringify({
-    type: "ready",
-    value: true
-  }));
-};
-
-
-/* ---------------------------
-   DRAW
----------------------------- */
-
-drawBtn.onclick = () => {
-
-  if (!socketOpen()) {
-    showError(
-      "Connection नहीं है।"
-    );
-    return;
-  }
-
-  socket.send(JSON.stringify({
-    type: "draw"
-  }));
-};
-
-
-/* ---------------------------
-   DISCARD
----------------------------- */
-
-discardBtn.onclick = () => {
-
-  if (selectedIndex < 0) {
-
-    showError(
-      "पहले एक card select करें।"
-    );
-
-    return;
-  }
-
-  if (!socketOpen()) {
-
-    showError(
-      "Connection नहीं है।"
-    );
-
-    return;
-  }
-
-  socket.send(JSON.stringify({
-    type: "discard",
-    index: selectedIndex
-  }));
-
-  selectedIndex = -1;
-};
-
-
-/* ---------------------------
-   DECLARE
----------------------------- */
-
-declareBtn.onclick = () => {
-
-  if (!socketOpen()) {
-
-    showError(
-      "Connection नहीं है।"
-    );
-
-    return;
-  }
-
-  socket.send(JSON.stringify({
-    type: "declare"
-  }));
-};
-
-
-/* ---------------------------
-   END TURN
----------------------------- */
-
-endTurnBtn.onclick = () => {
-
-  if (!socketOpen()) return;
-
-  socket.send(JSON.stringify({
-    type: "end_turn"
-  }));
-};
-
-
-/* ---------------------------
-   CHAT
----------------------------- */
-
-chatBtn.onclick = sendChat;
-
-msgInput.addEventListener(
-  "keydown",
-  event => {
-
-    if (event.key === "Enter") {
-      sendChat();
-    }
-
-  }
-);
-
-
-function sendChat() {
-
-  const text =
-    msgInput.value.trim();
-
-  if (!text) return;
-
-  if (!socketOpen()) {
-
-    showError(
-      "Connection नहीं है।"
-    );
-
-    return;
-  }
-
-  socket.send(JSON.stringify({
-    type: "chat",
-    text
-  }));
-
-  msgInput.value = "";
-}
-
-
-/* ---------------------------
-   STATE RENDER
----------------------------- */
-
-function renderState(state) {
+function renderState() {
 
   if (!state) return;
 
-  rc.textContent =
-    state.code || "------";
+  $("roomCode").textContent =
+    state.code;
 
-  const players =
-    state.players || [];
+  $("playerCount").textContent =
+    `${state.players.length}/8`;
 
-  playerCount.textContent =
-    players.length + "/8";
-
-  const meName =
-    nameInput.value.trim();
-
-  ps.innerHTML =
-    players.map(player => {
-
-      const isMe =
-        player.name === meName;
-
-      let status = "Waiting";
-
-      if (player.out) {
-        status = "ELIMINATED";
-      } else if (!player.connected) {
-        status = "OFFLINE";
-      } else if (player.ready) {
-        status = "✓ Ready";
-      }
-
-      return `
-        <div class="p
-          ${player.out ? "out" : ""}
-          ${!player.connected ? "offline" : ""}
-          ${isMe ? "me" : ""}
-        ">
-          <b>
-            ${esc(player.name)}
-            ${isMe ? " (You)" : ""}
-          </b>
-
-          <br>
-
-          ${player.score} pts
-          • ${esc(status)}
-
-          ${
-            player.cards
-              ? `<br>${player.cards} cards`
-              : ""
-          }
-        </div>
-      `;
-
-    }).join("");
+  $("roomBadge").textContent =
+    state.started
+      ? "GAME RUNNING"
+      : "WAITING";
 
 
-  /*
-    Status
-  */
+  const turnPlayer =
+    state.players[state.turn];
+
+
+  $("turnText").textContent =
+    state.started
+      ? `Round ${state.round} • Turn: ${
+          turnPlayer
+            ? turnPlayer.name
+            : "—"
+        }`
+      : "";
+
 
   if (!state.started) {
 
     const active =
-      players.filter(p => !p.out);
+      state.players.filter(
+        p => !p.out
+      );
 
-    if (active.length < 2) {
-
-      st.textContent =
-        `Players ${active.length}/8 • कम से कम 2 players चाहिए`;
-
-    } else {
-
-      const ready =
-        active.filter(p => p.ready).length;
-
-      st.textContent =
-        `Waiting • ${ready}/${active.length} Ready`;
-
-    }
+    $("statusText").textContent =
+      active.length < 2
+        ? `कम से कम 2 players चाहिए (${active.length}/2)`
+        : "Ready दबाकर game शुरू करें. सभी active players ready होने चाहिए.";
 
   } else {
 
-    st.textContent =
-      `Round ${state.round} • Turn: ${
-        state.currentPlayer || "—"
-      }`;
+    $("statusText").textContent =
+      turnPlayer
+        ? `${turnPlayer.name} की turn${
+            turnPlayer.connected === false
+              ? " • reconnecting…"
+              : ""
+          }`
+        : "Game running";
+
   }
 
-
-  /*
-    Discard
-  */
-
-  if (state.discardTop) {
-
-    discardInfo.innerHTML =
-      `Discard: <span class="discard-card">
-        ${esc(state.discardTop.r)}
-        ${esc(state.discardTop.s)}
-      </span>`;
-
-  } else {
-
-    discardInfo.textContent =
-      "Discard: —";
-  }
-
-
-  /*
-    Seats
-  */
-
-  table
-    .querySelectorAll(".seat")
-    .forEach(element => element.remove());
-
-  players.forEach((player, index) => {
-
-    const seat =
-      document.createElement("div");
-
-    seat.className =
-      "seat s" +
-      (index % 8);
-
-    if (
-      state.started &&
-      index === state.turn
-    ) {
-      seat.classList.add("turn");
-    }
-
-    seat.innerHTML =
-      `${esc(player.name)}<br>${player.score} pts`;
-
-    table.appendChild(seat);
-  });
-
-
-  /*
-    Ready button
-  */
 
   const me =
-    p
+    state.players.find(
+      p => p.name === myName
+    );
 
-.w{
-  max-width:760px;
-  margin:auto;
-  padding:10px 12px 22px;
-}
 
-.top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:8px 2px;
-}
+  $("readyBtn").textContent =
+    me?.ready
+      ? "CANCEL READY"
+      : "READY UP";
 
-.brand{
-  font-size:22px;
-  font-weight:900;
-  letter-spacing:.5px;
-}
 
-.tag{
-  font-size:10px;
-  color:#57dfb5;
-  letter-spacing:1.5px;
-}
+  $("readyBtn").disabled =
+    state.started ||
+    !!me?.out;
 
-.b{
-  background:linear-gradient(
-    145deg,
-    #10191a,
-    #0b1214
+
+  $("players").innerHTML =
+    state.players
+      .map((p, i) => `
+
+        <div class="p ${
+          p.out ? "out" : ""
+        }">
+
+          <b>
+            ${esc(p.name)}
+            ${
+              p.name === myName
+                ? " (You)"
+                : ""
+            }
+          </b>
+
+          <br>
+
+          ${p.score} pts •
+          ${
+            p.out
+              ? "ELIMINATED"
+              : p.ready
+                ? "✓ Ready"
+                : "Waiting"
+          }
+
+          ${
+            p.connected === false
+              ? " • offline"
+              : ""
+          }
+
+        </div>
+
+      `)
+      .join("");
+
+
+  $("table")
+    .querySelectorAll(".seat")
+    .forEach(el => el.remove());
+
+
+  state.players.forEach(
+    (p, i) => {
+
+      const seat =
+        document.createElement("div");
+
+      seat.className =
+        `seat s${i}${
+          i === state.turn &&
+          state.started
+            ? " turn"
+            : ""
+        }`;
+
+      seat.innerHTML =
+        `${esc(p.name)}<br>
+         ${p.score} pts${
+           p.out
+             ? "<br>OUT"
+             : ""
+         }`;
+
+      $("table")
+        .appendChild(seat);
+
+    }
   );
-  border:1px solid #27403d;
-  border-radius:22px;
-  padding:14px;
-  margin:10px 0;
-  box-shadow:0 12px 35px #0008;
-}
 
-input,
-button{
-  padding:13px;
-  border-radius:13px;
-  border:1px solid #304a46;
-  width:100%;
-  margin:4px 0;
-  font-size:15px;
-}
 
-input{
-  background:#091012;
-  color:#fff;
-  outline:none;
-}
-
-input:focus{
-  border-color:#16c79a;
-}
-
-button{
-  background:linear-gradient(
-    135deg,
-    #19d2a1,
-    #0fae88
+  renderDiscard(
+    state.discard
   );
-  color:#03110d;
-  font-weight:900;
-  box-shadow:0 5px 15px #0bb98b33;
+
+  updateButtons();
+
 }
 
-button:disabled{
-  opacity:.35;
-  cursor:not-allowed;
-  box-shadow:none;
+
+function renderDiscard(card) {
+
+  const box =
+    $("discardCard");
+
+  if (!card) {
+
+    box.innerHTML =
+      `<div class="muted">—</div>`;
+
+    return;
+  }
+
+  const red =
+    card.suit === "♥" ||
+    card.suit === "♦";
+
+
+  box.innerHTML =
+    `<div
+       class="c ${
+         red ? "red" : ""
+       }"
+       style="cursor:default"
+     >
+
+       <div>
+         ${esc(card.rank)}
+       </div>
+
+       <div class="suit">
+         ${esc(card.suit)}
+       </div>
+
+     </div>`;
+
 }
 
-.secondary{
-  background:#182526;
-  color:#d9e8e4;
+
+function renderHand(info = {}) {
+
+  $("handCount").textContent =
+    `${handCards.length} cards`;
+
+
+  $("hand").innerHTML =
+    handCards
+      .map((card, i) => {
+
+        const red =
+          card.suit === "♥" ||
+          card.suit === "♦";
+
+
+        return `
+          <div
+            class="c ${
+              red ? "red" : ""
+            } ${
+              i === selectedIndex
+                ? "sel"
+                : ""
+            }"
+            onclick="selectCard(${i})"
+          >
+
+            <div>
+              ${esc(card.rank)}
+            </div>
+
+            <div class="suit">
+              ${esc(card.suit)}
+            </div>
+
+          </div>
+        `;
+
+      })
+      .join("");
+
+
+  if (info.message) {
+
+    $("actionStatus")
+      .textContent =
+      info.message;
+
+  }
+
+
+  updateButtons(info);
+
 }
 
-.row{
-  display:flex;
-  gap:7px;
+
+function selectCard(index) {
+
+  if (!state?.started) return;
+
+  if (
+    state.turn !==
+    myPlayerIndex()
+  ) return;
+
+  if (!handCards.length) return;
+
+
+  selectedIndex =
+    selectedIndex === index
+      ? -1
+      : index;
+
+
+  renderHand();
+
 }
 
-.row>*{
-  flex:1;
-}
 
-.code{
-  text-align:center;
-  font-size:30px;
-  font-weight:950;
-  letter-spacing:5px;
-  color:#61e4bd;
-  margin:6px 0;
-}
+function myPlayerIndex() {
 
-.ps{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:7px;
-}
+  if (!state) return -1;
 
-.p{
-  background:#111d1e;
-  border-radius:13px;
-  padding:9px;
-  font-size:12px;
-  border:1px solid #263c3a;
-  min-height:58px;
-}
-
-.p b{
-  font-size:13px;
-}
-
-.p.me{
-  border-color:#16c79a;
-}
-
-.p.turn{
-  box-shadow:
-    0 0 0 2px #16c79a44;
-}
-
-.out{
-  opacity:.4;
-  text-decoration:line-through;
-}
-
-.ok{
-  color:#4be3b0;
-}
-
-.t{
-  height:310px;
-  border-radius:24px;
-  background:radial-gradient(
-    circle at 50% 45%,
-    #155242 0,
-    #0b3027 38%,
-    #061512 78%
+  return state.players.findIndex(
+    p => p.name === myName
   );
-  position:relative;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border:1px solid #1e5b4d;
-  box-shadow:inset 0 0 50px #0008;
+
 }
 
-.center{
-  text-align:center;
-  font-weight:900;
-  letter-spacing:.4px;
+
+function isMyTurn() {
+
+  return !!state?.started &&
+    state.turn ===
+    myPlayerIndex();
+
 }
 
-.center .target{
-  font-size:10px;
-  color:#63ddba;
-  letter-spacing:2px;
+
+function updateButtons(info = {}) {
+
+  const me =
+    state?.players?.[
+      myPlayerIndex()
+    ];
+
+
+  const myTurn =
+    isMyTurn();
+
+
+  const drawn =
+    info.drawn !== undefined
+      ? !!info.drawn
+      : window.lastDrawn === true;
+
+
+  $("drawBtn").disabled =
+    !myTurn ||
+    drawn ||
+    handCards.length === 0;
+
+
+  $("discardBtn").disabled =
+    !myTurn ||
+    !drawn ||
+    selectedIndex < 0;
+
+
+  $("declareBtn").disabled =
+    !myTurn ||
+    drawn ||
+    handCards.length !== 13;
+
+
+  if (!state?.started) {
+
+    $("drawBtn").disabled = true;
+    $("discardBtn").disabled = true;
+    $("declareBtn").disabled = true;
+
+  }
+
+
+  if (me?.out) {
+
+    $("drawBtn").disabled = true;
+    $("discardBtn").disabled = true;
+    $("declareBtn").disabled = true;
+
+  }
+
 }
 
-.center .points{
-  font-size:28px;
+
+function toggleReady() {
+
+  const me =
+    state?.players?.[
+      myPlayerIndex()
+    ];
+
+  if (
+    !me ||
+    state?.started
+  ) return;
+
+
+  send({
+    type: "ready",
+    value: !me.ready
+  });
+
 }
 
-.center .small{
-  font-weight:500;
+
+function drawCard() {
+
+  if (
+    !isMyTurn() ||
+    window.lastDrawn === true
+  ) return;
+
+
+  if (
+    send({
+      type: "draw"
+    })
+  ) {
+
+    window.lastDrawn = true;
+
+    $("actionStatus")
+      .textContent =
+      "Card drawn. अब एक card select करके DISCARD करें.";
+
+    updateButtons();
+
+  }
+
 }
 
-.seat{
-  position:absolute;
-  background:#101b1c;
-  border:1px solid #35504c;
-  border-radius:12px;
-  padding:7px 9px;
-  font-size:10px;
-  min-width:72px;
-  text-align:center;
-  box-shadow:0 4px 12px #0007;
+
+function discardCard() {
+
+  if (
+    !isMyTurn() ||
+    window.lastDrawn !== true
+  ) return;
+
+
+  if (selectedIndex < 0) {
+
+    $("actionStatus")
+      .textContent =
+      "पहले discard करने वाला card select करें.";
+
+    return;
+  }
+
+
+  if (
+    send({
+      type: "discard",
+      index: selectedIndex
+    })
+  ) {
+
+    selectedIndex = -1;
+
+    window.lastDrawn = false;
+
+    $("actionStatus")
+      .textContent =
+      "Discarded. अगले player की turn…";
+
+    updateButtons();
+
+  }
+
 }
 
-.seat.active{
-  border-color:#16c79a;
-  box-shadow:
-    0 0 0 2px #16c79a44,
-    0 4px 14px #0009;
+
+function declareGame() {
+
+  if (
+    !isMyTurn() ||
+    window.lastDrawn === true ||
+    handCards.length !== 13
+  ) return;
+
+
+  send({
+    type: "declare"
+  });
+
 }
 
-.s0{
-  bottom:8px;
-  left:50%;
-  transform:translateX(-50%);
-}
 
-.s1{
-  left:4px;
-  bottom:25%;
-}
-
-.s2{
-  left:5px;
-  top:9%;
-}
-
-.s3{
-  left:29%;
-  top:5px;
-}
-
-.s4{
-  right:29%;
-  top:5px;
-}
-
-.s5{
-  right:5px;
-  top:9%;
-}
 
 .s6{
   right:4px;
