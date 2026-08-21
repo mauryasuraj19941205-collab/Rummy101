@@ -1,30 +1,912 @@
-const express=require("express"),http=require("http"),{WebSocketServer}=require("ws"),path=require("path");
-const app=express(),server=http.createServer(app),wss=new WebSocketServer({server});
+const express = require("express");
+const http = require("http");
+const { WebSocketServer } = require("ws");
+const path = require("path");
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+
 app.use(express.static(__dirname));
-const rooms=new Map(),MAX=8,S=["♠","♥","♦","♣"],R=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-const send=(w,x)=>w.readyState===1&&w.send(JSON.stringify(x)),code=()=>Math.random().toString(36).slice(2,8).toUpperCase();
-const rv=r=>r==="A"?1:["J","Q","K"].includes(r)?({J:11,Q:12,K:13}[r]):+r;
-const pv=r=>["A","J","Q","K"].includes(r)?10:+r;
-function deck(){let d=[];for(let k=0;k<2;k++)for(const s of S)for(const r of R)d.push({s,r,id:Math.random()});for(let i=0;i<4;i++)d.push({s:"★",r:"J",id:Math.random()});return d.sort(()=>Math.random()-.5)}
-function pure(g){if(g.length<3||g.some(c=>c.s==="★"))return false;let a=g.slice().sort((x,y)=>rv(x.r)-rv(y.r));return new Set(a.map(c=>c.s)).size===1&&a.every((c,i)=>i===0||rv(c.r)===rv(a[i-1].r)+1)}
-function seq(g){if(g.length<3)return false;let j=g.filter(c=>c.s==="★").length,a=g.filter(c=>c.s!=="★").sort((x,y)=>rv(x.r)-rv(y.r));if(!a.length||new Set(a.map(c=>c.s)).size!==1)return false;let need=0;for(let i=1;i<a.length;i++){let gap=rv(a[i].r)-rv(a[i-1].r);if(gap<=0)return false;need+=gap-1}return need<=j&&a.length+j>=3}
-function set(g){let a=g.filter(c=>c.s!=="★");return g.length>=3&&g.length<=4&&new Set(a.map(c=>c.r)).size===1&&new Set(a.map(c=>c.s)).size===a.length}
-function valid(h){if(h.length!==13)return false;function go(rem,groups){if(!rem.length)return groups.filter(seq).length>=2&&groups.some(pure);for(let m=1;m<(1<<rem.length);m++){let n=0;for(let x=m;x;x>>=1)n+=x&1;if(n<3||n>4)continue;let g=[],rest=[];rem.forEach((c,i)=>(m>>i&1?g:rest).push(c));if(seq(g)||set(g)){if(go(rest,groups.concat([g])))return true}}return false}return go(h,[])}
-function score(h){return h.reduce((a,c)=>a+(c.s==="★"?0:pv(c.r)),0)}
-function pub(r){return{code:r.code,started:r.started,turn:r.turn,round:r.round,players:r.p.map((p,i)=>({seat:i,name:p.name,ready:p.ready,score:p.score,out:p.out,cards:r.started?p.hand.length:0}))}}
-function bc(r,x){r.p.forEach(p=>send(p.ws,x))}
-function hands(r){r.p.forEach(p=>send(p.ws,{type:"hand",hand:p.hand,canDraw:r.started&&r.p[r.turn]===p}))}
-function start(r){r.deck=deck();r.discard=[r.deck.pop()];r.p.forEach(p=>{p.hand=[];p.drawn=false});for(let i=0;i<13;i++)r.p.forEach(p=>p.hand.push(r.deck.pop()));r.turn=0;r.started=true;hands(r);bc(r,{type:"state",state:pub(r)})}
-function finishRound(r,winner){r.p.forEach(p=>{if(p===winner)p.score+=0;else p.score+=score(p.hand)});let eliminated=r.p.filter(p=>p.score>=101);eliminated.forEach(p=>p.out=true);bc(r,{type:"round_end",winner:winner.name,scores:r.p.map(p=>({name:p.name,score:p.score,out:p.out}))});if(r.p.filter(p=>!p.out).length<=1){r.started=false;bc(r,{type:"match_end",winner:r.p.find(p=>!p.out)?.name||winner.name});return}r.round++;r.started=false;r.p.forEach(p=>p.ready=false);bc(r,{type:"state",state:pub(r)})}
-function next(r){do r.turn=(r.turn+1)%r.p.length;while(r.p[r.turn].out);hands(r);bc(r,{type:"state",state:pub(r)})}
-wss.on("connection",ws=>{let r,p;ws.on("message",raw=>{let m;try{m=JSON.parse(raw)}catch{return}
-if(m.type==="create"){r={code:code(),p:[],started:false,turn:0,round:1,deck:[],discard:[]};rooms.set(r.code,r);p={name:(m.name||"Player").slice(0,18),ws,ready:false,score:0,out:false,hand:[],drawn:false};r.p.push(p);send(ws,{type:"joined",code:r.code});bc(r,{type:"state",state:pub(r)});return}
-if(m.type==="join"){r=rooms.get(String(m.code||"").toUpperCase());if(!r||r.started||r.p.length>=MAX)return send(ws,{type:"error",message:"Room unavailable"});p={name:(m.name||"Player").slice(0,18),ws,ready:false,score:0,out:false,hand:[],drawn:false};r.p.push(p);send(ws,{type:"joined",code:r.code});bc(r,{type:"state",state:pub(r)});return}
-if(!r||!p)return;
-if(m.type==="ready"){p.ready=!!m.value;if(r.p.filter(x=>!x.out).length>=2&&r.p.filter(x=>!x.out).every(x=>x.ready))start(r);else bc(r,{type:"state",state:pub(r)})}
-if(m.type==="draw"&&r.started&&r.p[r.turn]===p&&!p.drawn){if(!r.deck.length){r.deck=r.discard.slice(0,-1).sort(()=>Math.random()-.5);r.discard=[r.discard.at(-1)]}p.hand.push(r.deck.pop());p.drawn=true;send(ws,{type:"hand",hand:p.hand,canDraw:false})}
-if(m.type==="discard"&&r.started&&r.p[r.turn]===p&&p.drawn){let i=+m.index;if(i>=0&&i<p.hand.length){r.discard.push(p.hand.splice(i,1)[0]);p.drawn=false;next(r)}}
-if(m.type==="declare"&&r.started&&r.p[r.turn]===p&&p.drawn===false){if(valid(p.hand)){finishRound(r,p)}else send(ws,{type:"error",message:"Invalid declaration. Need 2 sequences, including 1 pure sequence."})}
-if(m.type==="chat")bc(r,{type:"chat",name:p.name,text:String(m.text||"").slice(0,160)})});
-ws.on("close",()=>{if(r&&p){r.p=r.p.filter(x=>x!==p);if(r.p.length)bc(r,{type:"state",state:pub(r)});else rooms.delete(r.code)}})});
-server.listen(process.env.PORT||3000);
+
+const rooms = new Map();
+
+const MAX_PLAYERS = 8;
+
+const SUITS = ["♠", "♥", "♦", "♣"];
+const RANKS = [
+  "A", "2", "3", "4", "5", "6", "7",
+  "8", "9", "10", "J", "Q", "K"
+];
+
+function send(ws, data) {
+  if (ws && ws.readyState === 1) {
+    ws.send(JSON.stringify(data));
+  }
+}
+
+function roomCode() {
+  return Math.random()
+    .toString(36)
+    .slice(2, 8)
+    .toUpperCase();
+}
+
+function playerId() {
+  return Math.random()
+    .toString(36)
+    .slice(2, 10);
+}
+
+function rankValue(rank) {
+  if (rank === "A") return 1;
+  if (rank === "J") return 11;
+  if (rank === "Q") return 12;
+  if (rank === "K") return 13;
+  return Number(rank);
+}
+
+function pointValue(rank) {
+  if (["A", "J", "Q", "K"].includes(rank)) return 10;
+  return Number(rank);
+}
+
+function createDeck() {
+  const deck = [];
+
+  // Two standard decks
+  for (let copy = 0; copy < 2; copy++) {
+    for (const suit of SUITS) {
+      for (const rank of RANKS) {
+        deck.push({
+          s: suit,
+          r: rank,
+          id: Math.random().toString(36).slice(2)
+        });
+      }
+    }
+  }
+
+  // Four jokers
+  for (let i = 0; i < 4; i++) {
+    deck.push({
+      s: "★",
+      r: "J",
+      id: Math.random().toString(36).slice(2)
+    });
+  }
+
+  // Fisher-Yates shuffle
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+
+  return deck;
+}
+
+/*
+  PURE SEQUENCE
+  Example:
+  4♠ 5♠ 6♠
+  A♥ 2♥ 3♥
+*/
+function isPureSequence(group) {
+  if (group.length < 3) return false;
+
+  // Joker not allowed
+  if (group.some(card => card.s === "★")) {
+    return false;
+  }
+
+  const sorted = [...group].sort(
+    (a, b) => rankValue(a.r) - rankValue(b.r)
+  );
+
+  const suits = new Set(sorted.map(card => card.s));
+
+  if (suits.size !== 1) {
+    return false;
+  }
+
+  for (let i = 1; i < sorted.length; i++) {
+    if (
+      rankValue(sorted[i].r) !==
+      rankValue(sorted[i - 1].r) + 1
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/*
+  SEQUENCE WITH JOKERS
+*/
+function isSequence(group) {
+  if (group.length < 3) return false;
+
+  const jokers = group.filter(card => card.s === "★").length;
+
+  const normalCards = group
+    .filter(card => card.s !== "★")
+    .sort((a, b) => rankValue(a.r) - rankValue(b.r));
+
+  if (normalCards.length === 0) {
+    return false;
+  }
+
+  const suits = new Set(normalCards.map(card => card.s));
+
+  if (suits.size !== 1) {
+    return false;
+  }
+
+  let neededJokers = 0;
+
+  for (let i = 1; i < normalCards.length; i++) {
+    const gap =
+      rankValue(normalCards[i].r) -
+      rankValue(normalCards[i - 1].r);
+
+    // Duplicate rank is invalid
+    if (gap <= 0) {
+      return false;
+    }
+
+    neededJokers += gap - 1;
+  }
+
+  return (
+    neededJokers <= jokers &&
+    normalCards.length + jokers >= 3
+  );
+}
+
+/*
+  SET
+  Example:
+  7♠ 7♥ 7♦
+  9♠ 9♥ 9♦ 9♣
+*/
+function isSet(group) {
+  const normalCards = group.filter(card => card.s !== "★");
+
+  if (group.length < 3 || group.length > 4) {
+    return false;
+  }
+
+  if (normalCards.length === 0) {
+    return false;
+  }
+
+  const ranks = new Set(normalCards.map(card => card.r));
+  const suits = new Set(normalCards.map(card => card.s));
+
+  return (
+    ranks.size === 1 &&
+    suits.size === normalCards.length
+  );
+}
+
+/*
+  VALID RUMMY HAND
+
+  Exactly 13 cards.
+  At least 2 sequences.
+  At least 1 pure sequence.
+*/
+function isValidHand(hand) {
+  if (hand.length !== 13) {
+    return false;
+  }
+
+  function search(remaining, groups) {
+    if (remaining.length === 0) {
+      const sequenceCount = groups.filter(isSequence).length;
+      const hasPure = groups.some(isPureSequence);
+
+      return sequenceCount >= 2 && hasPure;
+    }
+
+    // Prevent excessive recursion
+    if (groups.length > 5) {
+      return false;
+    }
+
+    for (let mask = 1; mask < (1 << remaining.length); mask++) {
+      let count = 0;
+
+      for (
+        let bits = mask;
+        bits;
+        bits >>= 1
+      ) {
+        count += bits & 1;
+      }
+
+      if (count < 3 || count > 4) {
+        continue;
+      }
+
+      const group = [];
+      const rest = [];
+
+      remaining.forEach((card, index) => {
+        if (mask & (1 << index)) {
+          group.push(card);
+        } else {
+          rest.push(card);
+        }
+      });
+
+      if (
+        isSequence(group) ||
+        isSet(group)
+      ) {
+        if (search(rest, [...groups, group])) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  return search(hand, []);
+}
+
+function calculateScore(hand) {
+  return hand.reduce((total, card) => {
+    if (card.s === "★") {
+      return total;
+    }
+
+    return total + pointValue(card.r);
+  }, 0);
+}
+
+/*
+  Public room state.
+  Do not send players' cards to everyone.
+*/
+function publicState(room) {
+  return {
+    code: room.code,
+    started: room.started,
+    round: room.round,
+
+    turn: room.turn,
+
+    // "waiting", "draw", "discard", "declare"
+    phase: room.phase,
+
+    players: room.players.map((player, index) => ({
+      id: player.id,
+      seat: index,
+      name: player.name,
+      ready: player.ready,
+      score: player.score,
+      out: player.out,
+      cards: room.started ? player.hand.length : 0
+    })),
+
+    discardTop:
+      room.discard.length
+        ? room.discard[room.discard.length - 1]
+        : null
+  };
+}
+
+function broadcast(room, data) {
+  room.players.forEach(player => {
+    send(player.ws, data);
+  });
+}
+
+/*
+  Send each player their own hand.
+*/
+function sendHands(room) {
+  room.players.forEach(player => {
+    const isCurrent =
+      room.started &&
+      room.players[room.turn] === player;
+
+    send(player.ws, {
+      type: "hand",
+      hand: player.hand,
+
+      canDraw:
+        isCurrent &&
+        room.phase === "draw",
+
+      canDiscard:
+        isCurrent &&
+        room.phase === "discard",
+
+      canDeclare:
+        isCurrent &&
+        room.phase === "declare"
+    });
+  });
+}
+
+function broadcastState(room) {
+  broadcast(room, {
+    type: "state",
+    state: publicState(room)
+  });
+
+  sendHands(room);
+}
+
+/*
+  Start a round.
+*/
+function startRound(room) {
+  room.deck = createDeck();
+  room.discard = [];
+
+  room.players.forEach(player => {
+    player.hand = [];
+    player.drawn = false;
+  });
+
+  // Deal 13 cards to every player
+  for (let i = 0; i < 13; i++) {
+    room.players.forEach(player => {
+      player.hand.push(room.deck.pop());
+    });
+  }
+
+  // Start discard pile
+  room.discard.push(room.deck.pop());
+
+  room.turn = 0;
+  room.phase = "draw";
+  room.started = true;
+
+  broadcastState(room);
+}
+
+/*
+  Move to next active player.
+*/
+function nextTurn(room) {
+  if (!room.players.length) {
+    return;
+  }
+
+  let attempts = 0;
+
+  do {
+    room.turn =
+      (room.turn + 1) %
+      room.players.length;
+
+    attempts++;
+
+    if (attempts > room.players.length) {
+      break;
+    }
+  } while (room.players[room.turn].out);
+
+  room.phase = "draw";
+
+  room.players.forEach(player => {
+    player.drawn = false;
+  });
+
+  broadcastState(room);
+}
+
+/*
+  Finish round.
+*/
+function finishRound(room, winner) {
+  room.players.forEach(player => {
+    if (player !== winner) {
+      player.score += calculateScore(player.hand);
+    }
+  });
+
+  // Eliminate 101+
+  room.players.forEach(player => {
+    if (player.score >= 101) {
+      player.out = true;
+    }
+  });
+
+  broadcast(room, {
+    type: "round_end",
+    winner: winner.name,
+    scores: room.players.map(player => ({
+      id: player.id,
+      name: player.name,
+      score: player.score,
+      out: player.out
+    }))
+  });
+
+  const activePlayers =
+    room.players.filter(player => !player.out);
+
+  // Match over
+  if (activePlayers.length <= 1) {
+    room.started = false;
+    room.phase = "waiting";
+
+    broadcast(room, {
+      type: "match_end",
+      winner:
+        activePlayers[0]?.name ||
+        winner.name
+    });
+
+    broadcastState(room);
+    return;
+  }
+
+  // Prepare next round
+  room.round++;
+  room.started = false;
+  room.phase = "waiting";
+  room.turn = 0;
+
+  room.players.forEach(player => {
+    player.ready = false;
+    player.hand = [];
+    player.drawn = false;
+  });
+
+  broadcastState(room);
+}
+
+wss.on("connection", ws => {
+  let room = null;
+  let player = null;
+
+  ws.on("message", raw => {
+    let message;
+
+    try {
+      message = JSON.parse(raw.toString());
+    } catch {
+      send(ws, {
+        type: "error",
+        message: "Invalid message."
+      });
+
+      return;
+    }
+
+    /*
+      CREATE ROOM
+    */
+    if (message.type === "create") {
+      const code = roomCode();
+
+      room = {
+        code,
+        players: [],
+        started: false,
+        turn: 0,
+        round: 1,
+        phase: "waiting",
+        deck: [],
+        discard: []
+      };
+
+      player = {
+        id: playerId(),
+        name: String(
+          message.name || "Player"
+        ).slice(0, 18),
+        ws,
+        ready: false,
+        score: 0,
+        out: false,
+        hand: [],
+        drawn: false
+      };
+
+      room.players.push(player);
+      rooms.set(code, room);
+
+      send(ws, {
+        type: "joined",
+        code,
+        playerId: player.id
+      });
+
+      broadcastState(room);
+
+      return;
+    }
+
+    /*
+      JOIN ROOM
+    */
+    if (message.type === "join") {
+      const code = String(
+        message.code || ""
+      )
+        .trim()
+        .toUpperCase();
+
+      room = rooms.get(code);
+
+      if (
+        !room ||
+        room.started ||
+        room.players.length >= MAX_PLAYERS
+      ) {
+        send(ws, {
+          type: "error",
+          message:
+            "Room unavailable. Check the room code or try another room."
+        });
+
+        return;
+      }
+
+      player = {
+        id: playerId(),
+        name: String(
+          message.name || "Player"
+        ).slice(0, 18),
+        ws,
+        ready: false,
+        score: 0,
+        out: false,
+        hand: [],
+        drawn: false
+      };
+
+      room.players.push(player);
+
+      send(ws, {
+        type: "joined",
+        code: room.code,
+        playerId: player.id
+      });
+
+      broadcastState(room);
+
+      return;
+    }
+
+    /*
+      All remaining messages require a player.
+    */
+    if (!room || !player) {
+      send(ws, {
+        type: "error",
+        message: "You are not connected to a room."
+      });
+
+      return;
+    }
+
+    /*
+      READY / UNREADY
+    */
+    if (message.type === "ready") {
+      if (room.started) {
+        return;
+      }
+
+      if (player.out) {
+        return;
+      }
+
+      player.ready = Boolean(message.value);
+
+      const activePlayers =
+        room.players.filter(p => !p.out);
+
+      const allReady =
+        activePlayers.length >= 2 &&
+        activePlayers.every(p => p.ready);
+
+      if (allReady) {
+        startRound(room);
+      } else {
+        broadcastState(room);
+      }
+
+      return;
+    }
+
+    /*
+      DRAW
+    */
+    if (message.type === "draw") {
+      const isMyTurn =
+        room.started &&
+        room.players[room.turn] === player;
+
+      if (!isMyTurn) {
+        send(ws, {
+          type: "error",
+          message: "It is not your turn."
+        });
+
+        return;
+      }
+
+      if (room.phase !== "draw") {
+        send(ws, {
+          type: "error",
+          message: "You cannot draw right now."
+        });
+
+        return;
+      }
+
+      /*
+        Recycle discard pile if deck is empty.
+        Keep the top discard card.
+      */
+      if (room.deck.length === 0) {
+        if (room.discard.length <= 1) {
+          send(ws, {
+            type: "error",
+            message: "No cards available to draw."
+          });
+
+          return;
+        }
+
+        const top =
+          room.discard[room.discard.length - 1];
+
+        const recycled =
+          room.discard
+            .slice(0, -1)
+            .sort(() => Math.random() - 0.5);
+
+        room.deck = recycled;
+        room.discard = [top];
+      }
+
+      const card = room.deck.pop();
+
+      if (!card) {
+        send(ws, {
+          type: "error",
+          message: "Unable to draw a card."
+        });
+
+        return;
+      }
+
+      player.hand.push(card);
+      player.drawn = true;
+
+      room.phase = "discard";
+
+      broadcastState(room);
+
+      return;
+    }
+
+    /*
+      DISCARD
+    */
+    if (message.type === "discard") {
+      const isMyTurn =
+        room.started &&
+        room.players[room.turn] === player;
+
+      if (!isMyTurn) {
+        send(ws, {
+          type: "error",
+          message: "It is not your turn."
+        });
+
+        return;
+      }
+
+      if (room.phase !== "discard") {
+        send(ws, {
+          type: "error",
+          message: "Draw a card before discarding."
+        });
+
+        return;
+      }
+
+      if (player.hand.length !== 14) {
+        send(ws, {
+          type: "error",
+          message: "You must have 14 cards before discard."
+        });
+
+        return;
+      }
+
+      const index = Number(message.index);
+
+      if (
+        !Number.isInteger(index) ||
+        index < 0 ||
+        index >= player.hand.length
+      ) {
+        send(ws, {
+          type: "error",
+          message: "Invalid card selection."
+        });
+
+        return;
+      }
+
+      const discarded =
+        player.hand.splice(index, 1)[0];
+
+      room.discard.push(discarded);
+
+      player.drawn = false;
+
+      /*
+        After discard, player has 13 cards.
+        If hand is valid, give DECLARE opportunity.
+      */
+      if (isValidHand(player.hand)) {
+        room.phase = "declare";
+
+        broadcastState(room);
+
+        send(ws, {
+          type: "info",
+          message:
+            "Your hand is valid. Press DECLARE to finish the round."
+        });
+
+        return;
+      }
+
+      /*
+        Not a winning hand.
+        Automatically move to next player.
+      */
+      nextTurn(room);
+
+      return;
+    }
+
+    /*
+      DECLARE
+    */
+    if (message.type === "declare") {
+      const isMyTurn =
+        room.started &&
+        room.players[room.turn] === player;
+
+      if (!isMyTurn) {
+        send(ws, {
+          type: "error",
+          message: "It is not your turn."
+        });
+
+        return;
+      }
+
+      if (room.phase !== "declare") {
+        send(ws, {
+          type: "error",
+          message:
+            "You can declare only after discarding."
+        });
+
+        return;
+      }
+
+      if (player.hand.length !== 13) {
+        send(ws, {
+          type: "error",
+          message:
+            "Declaration requires exactly 13 cards."
+        });
+
+        return;
+      }
+
+      if (!isValidHand(player.hand)) {
+        send(ws, {
+          type: "error",
+          message:
+            "Invalid declaration. Need 2 sequences, including 1 pure sequence."
+        });
+
+        return;
+      }
+
+      finishRound(room, player);
+
+      return;
+    }
+
+    /*
+      CHAT
+    */
+    if (message.type === "chat") {
+      const text = String(
+        message.text || ""
+      ).trim();
+
+      if (!text) {
+        return;
+      }
+
+      broadcast(room, {
+        type: "chat",
+        name: player.name,
+        text: text.slice(0, 160)
+      });
+
+      return;
+    }
+  });
+
+  /*
+    CONNECTION CLOSED
+  */
+  ws.on("close", () => {
+    if (!room || !player) {
+      return;
+    }
+
+    const index =
+      room.players.indexOf(player);
+
+    if (index === -1) {
+      return;
+    }
+
+    room.players.splice(index, 1);
+
+    if (room.players.length === 0) {
+      rooms.delete(room.code);
+      return;
+    }
+
+    /*
+      If current player leaves during a game,
+      move turn safely.
+    */
+    if (room.started) {
+      if (room.turn >= room.players.length) {
+        room.turn = 0;
+      }
+
+      if (room.players.length < 2) {
+        room.started = false;
+        room.phase = "waiting";
+
+        room.players.forEach(p => {
+          p.ready = false;
+        });
+      } else {
+        room.phase = "draw";
+      }
+    }
+
+    broadcastState(room);
+  });
+
+  ws.on("error", () => {
+    // Connection errors are handled by close.
+  });
+});
+
+/*
+  Render requires the PORT environment variable.
+*/
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Rummy 101 server running on port ${PORT}`);
+});
