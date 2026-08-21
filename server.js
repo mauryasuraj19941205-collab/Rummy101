@@ -1,5 +1,7 @@
 const express=require("express"),http=require("http"),{WebSocketServer}=require("ws"),path=require("path");
-const app=express(),server=http.createServer(app),wss=new WebSocketServer({server});
+app.use(express.static(__dirname));
+res.sendFile(path.join(__dirname,"index.html"));
+});
 app.use(express.static(__dirname));
   res.sendFile(path.join(__dirname,"index.html"));
 });
