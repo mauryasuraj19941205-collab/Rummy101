@@ -1,0 +1,12 @@
+{
+  "name": "rummy101-101-scoring",
+  "version": "3.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "ws": "^8.18.0"
+  }
+}
