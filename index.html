@@ -20,4 +20,212 @@ input,button{padding:13px;border-radius:13px;border:1px solid #304a46;width:100%
 <div class="b"><div class="row"><button onclick="draw()">DRAW</button><button onclick="discard()">DISCARD</button><button onclick="declare()">DECLARE</button></div><div id="hand" class="hand"></div></div>
 <div class="b"><b>Scoring</b><div class="small">Round खत्म होने पर winner को 0 और बाकी खिलाड़ियों के unmatched cards के points उनके score में जुड़ते हैं. 101 या उससे अधिक होने पर player eliminate हो जाता है. आखिरी बचा player match winner है.</div></div>
 <div class="b"><b>Chat</b><div id="chatbox" class="chat"></div><div class="row"><input id="msg" placeholder="Message"><button onclick="chat()">Send</button></div></div></div></div>
-<script>let w,my=[],sel=-1;const $=x=>document.getElementById(x);function conn(cb){w=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host);w.onopen=cb;w.onmessage=e=>{let m=JSON.parse(e.data);if(m.type==="error")alert(m.message);if(m.type==="joined"){home.classList.add("hide");game.classList.remove("hide");rc.textContent=m.code}if(m.type==="state")render(m.state);if(m.type==="hand"){my=m.hand;drawHand()}if(m.type==="round_end"){alert("Round winner: "+m.winner);m.scores.forEach(x=>{});render({code:rc.textContent,started:false,players:m.scores.map((x,i)=>({name:x.name,score:x.score,out:x.out,ready:false}))})}if(m.type==="match_end")alert("🏆 Match Winner: "+m.winner);if(m.type==="chat"){chatbox.innerHTML+=`<div><b>${esc(m.name)}</b>: ${esc(m.text)}</div>`}}}function create(){if(name.value.trim())conn(()=>w.send(JSON.stringify({type:"create",name:name.value.trim()})))}function join(){if(name.value.trim()&&code.value.trim())conn(()=>w.send(JSON.stringify({type:"join",name:name.value.trim(),code:code.value.trim()})))}function ready(){w.send(JSON.stringify({type:"ready",value:true}))}function draw(){w.send(JSON.stringify({type:"draw"}))}function discard(){if(sel<0)return alert("Card चुनें");w.send(JSON.stringify({type:"discard",index:sel}));sel=-1}function declare(){w.send(JSON.stringify({type:"declare"}))}function chat(){if(msg.value.trim()){w.send(JSON.stringify({type:"chat",text:msg.value.trim()}));msg.value=""}}function render(s){rc.textContent=s.code||rc.textContent;st.textContent=s.started?"Round "+s.round+" • Turn: "+(s.players[s.turn]?.name||""):"Players "+(s.players?.length||0)+"/8 • Ready";ps.innerHTML=(s.players||[]).map(p=>`<div class="p ${p.out?"out":""}"><b>${esc(p.name)}</b><br>${p.score} pts ${p.out?"• ELIMINATED":p.ready?"• ✓ Ready":"• Waiting"}</div>`).join("");table.querySelectorAll(".seat").forEach(x=>x.remove());(s.players||[]).forEach((p,i)=>{let q=document.createElement("div");q.className="seat s"+i;q.innerHTML=esc(p.name)+"<br>"+p.score+" pts";table.appendChild(q)})}function drawHand(){hand.innerHTML=my.map((c,i)=>`<div class="c ${i===sel?"sel ":""}${c.s==="♥"||c.s==="♦"?"red":""}" onclick="sel=${i};drawHand()">${c.r}<div class=suit>${c.s}</div></div>`).join("")}function esc(x){return String(x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}</script></body></html>
+<script>
+let w,my=[],sel=-1;
+
+const $=id=>document.getElementById(id);
+
+function conn(cb){
+  w=new WebSocket(
+    (location.protocol==="https:"?"wss://":"ws://")+location.host
+  );
+
+  w.onopen=cb;
+
+  w.onerror=()=>{
+    alert("Server connection failed. Please try again.");
+  };
+
+  w.onclose=()=>{
+    console.log("WebSocket closed");
+  };
+
+  w.onmessage=e=>{
+    let m=JSON.parse(e.data);
+
+    if(m.type==="error"){
+      alert(m.message);
+    }
+
+    if(m.type==="joined"){
+      $("home").classList.add("hide");
+      $("game").classList.remove("hide");
+      $("rc").textContent=m.code;
+    }
+
+    if(m.type==="state"){
+      render(m.state);
+    }
+
+    if(m.type==="hand"){
+      my=m.hand;
+      drawHand();
+    }
+
+    if(m.type==="round_end"){
+      alert("Round winner: "+m.winner);
+      render({
+        code:$("rc").textContent,
+        started:false,
+        players:m.scores.map(x=>({
+          name:x.name,
+          score:x.score,
+          out:x.out,
+          ready:false
+        }))
+      });
+    }
+
+    if(m.type==="match_end"){
+      alert("🏆 Match Winner: "+m.winner);
+    }
+
+    if(m.type==="chat"){
+      $("chatbox").innerHTML+=
+        `<div><b>${esc(m.name)}</b>: ${esc(m.text)}</div>`;
+      $("chatbox").scrollTop=$("chatbox").scrollHeight;
+    }
+  };
+}
+
+function create(){
+  const playerName=$("name").value.trim();
+
+  if(!playerName){
+    alert("पहले अपना नाम लिखें");
+    return;
+  }
+
+  conn(()=>{
+    w.send(JSON.stringify({
+      type:"create",
+      name:playerName
+    }));
+  });
+}
+
+function join(){
+  const playerName=$("name").value.trim();
+  const roomCode=$("code").value.trim();
+
+  if(!playerName){
+    alert("पहले अपना नाम लिखें");
+    return;
+  }
+
+  if(!roomCode){
+    alert("Room code डालें");
+    return;
+  }
+
+  conn(()=>{
+    w.send(JSON.stringify({
+      type:"join",
+      name:playerName,
+      code:roomCode
+    }));
+  });
+}
+
+function ready(){
+  if(!w || w.readyState!==1){
+    alert("Server से connection नहीं है");
+    return;
+  }
+
+  w.send(JSON.stringify({
+    type:"ready",
+    value:true
+  }));
+}
+
+function draw(){
+  if(!w || w.readyState!==1){
+    alert("Server से connection नहीं है");
+    return;
+  }
+
+  w.send(JSON.stringify({type:"draw"}));
+}
+
+function discard(){
+  if(sel<0){
+    alert("Card चुनें");
+    return;
+  }
+
+  w.send(JSON.stringify({
+    type:"discard",
+    index:sel
+  }));
+
+  sel=-1;
+}
+
+function declare(){
+  w.send(JSON.stringify({type:"declare"}));
+}
+
+function chat(){
+  const text=$("msg").value.trim();
+
+  if(text){
+    w.send(JSON.stringify({
+      type:"chat",
+      text:text
+    }));
+
+    $("msg").value="";
+  }
+}
+
+function render(s){
+  $("rc").textContent=s.code||$("rc").textContent;
+
+  $("st").textContent=
+    s.started
+    ? "Round "+s.round+" • Turn: "+(s.players[s.turn]?.name||"")
+    : "Players "+(s.players?.length||0)+"/8 • Ready";
+
+  $("ps").innerHTML=(s.players||[]).map(p=>
+    `<div class="p ${p.out?"out":""}">
+      <b>${esc(p.name)}</b><br>
+      ${p.score} pts
+      ${p.out?"• ELIMINATED":p.ready?"• ✓ Ready":"• Waiting"}
+    </div>`
+  ).join("");
+
+  $("table").querySelectorAll(".seat").forEach(x=>x.remove());
+
+  (s.players||[]).forEach((p,i)=>{
+    let q=document.createElement("div");
+    q.className="seat s"+i;
+    q.innerHTML=
+      esc(p.name)+"<br>"+p.score+" pts";
+    $("table").appendChild(q);
+  });
+}
+
+function drawHand(){
+  $("hand").innerHTML=my.map((c,i)=>
+    `<div class="c ${i===sel?"sel ":""}${c.s==="♥"||c.s==="♦"?"red":""}"
+      onclick="sel=${i};drawHand()">
+      ${c.r}
+      <div class="suit">${c.s}</div>
+    </div>`
+  ).join("");
+}
+
+function esc(x){
+  return String(x).replace(
+    /[&<>"']/g,
+    c=>({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#39;"
+    }[c])
+  );
+}
+</script>
