@@ -1,231 +1,1408 @@
-<!doctype html><html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rummy 101</title>
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Rummy 101</title>
+
 <style>
-*{box-sizing:border-box}body{margin:0;background:#050809;color:#eef8f5;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
-body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 50% -10%,#1a5545 0,transparent 35%)}
-.w{max-width:760px;margin:auto;padding:10px 12px 22px}.top{display:flex;justify-content:space-between;align-items:center;padding:8px 2px}
-.brand{font-size:22px;font-weight:900;letter-spacing:.5px}.tag{font-size:10px;color:#57dfb5;letter-spacing:1.5px}
-.b{background:linear-gradient(145deg,#10191a,#0b1214);border:1px solid #27403d;border-radius:22px;padding:14px;margin:10px 0;box-shadow:0 12px 35px #0008}
-input,button{padding:13px;border-radius:13px;border:1px solid #304a46;width:100%;margin:4px 0;font-size:15px}input{background:#091012;color:#fff;outline:none}input:focus{border-color:#16c79a}button{background:linear-gradient(135deg,#19d2a1,#0fae88);color:#03110d;font-weight:900;box-shadow:0 5px 15px #0bb98b33}.secondary{background:#182526;color:#d9e8e4}
-.row{display:flex;gap:7px}.row>*{flex:1}.code{text-align:center;font-size:30px;font-weight:950;letter-spacing:5px;color:#61e4bd}
-.ps{display:grid;grid-template-columns:1fr 1fr;gap:7px}.p{background:#111d1e;border-radius:13px;padding:9px;font-size:12px;border:1px solid #263c3a;min-height:58px}.p b{font-size:13px}.out{opacity:.4;text-decoration:line-through}.ok{color:#4be3b0}
-.t{height:310px;border-radius:24px;background:radial-gradient(circle at 50% 45%,#155242 0,#0b3027 38%,#061512 78%);position:relative;display:flex;align-items:center;justify-content:center;border:1px solid #1e5b4d;box-shadow:inset 0 0 50px #0008}
-.center{text-align:center;font-weight:900;letter-spacing:.4px}.center .target{font-size:10px;color:#63ddba;letter-spacing:2px}.center .points{font-size:28px}.center .small{font-weight:500}
-.seat{position:absolute;background:#101b1c;border:1px solid #35504c;border-radius:12px;padding:7px 9px;font-size:10px;min-width:72px;text-align:center;box-shadow:0 4px 12px #0007}.s0{bottom:8px;left:50%;transform:translateX(-50%)}.s1{left:4px;bottom:25%}.s2{left:5px;top:9%}.s3{left:29%;top:5px}.s4{right:29%;top:5px}.s5{right:5px;top:9%}.s6{right:4px;bottom:25%}.s7{right:50%;bottom:8px;transform:translateX(50%)}
-.hand{display:flex;gap:6px;overflow:auto;padding:12px 2px 8px;scrollbar-width:none}.hand::-webkit-scrollbar{display:none}
-.c{flex:0 0 52px;height:76px;background:linear-gradient(145deg,#fffdf5,#e8e4d8);color:#18201f;border-radius:10px;text-align:center;padding:6px;font-weight:900;border:2px solid #fff;box-shadow:0 5px 12px #0008;transition:.15s}.c:hover{transform:translateY(-3px)}.sel{border-color:#16c79a;box-shadow:0 0 0 2px #16c79a55,0 7px 14px #0009;transform:translateY(-8px)}.red{color:#d53b49}.suit{font-size:23px}.chat{height:110px;overflow:auto;background:#070d0f;border-radius:12px;padding:9px;font-size:12px;border:1px solid #1d302e}.hide{display:none}.small{font-size:12px;color:#9fb3ae;line-height:1.55}.titleline{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}.badge{font-size:10px;color:#06110d;background:#4be0b2;border-radius:999px;padding:4px 8px;font-weight:900}
-@media(max-width:420px){.t{height:285px}.c{flex-basis:48px;height:71px}.seat{min-width:66px;padding:6px;font-size:9px}}
-</style></head>
-<body><div class="w"><div class="top"><div><div class="tag">8 PLAYER • REAL-TIME ARENA</div><div class="brand">♠ RUMMY 101</div></div><div class="badge">101 POINTS</div></div><div id="home" class="b"><input id="name" placeholder="आपका नाम"><button onclick="create()">Create Room</button><input id="code" placeholder="Room code"><button onclick="join()">Join Room</button></div>
-<div id="game" class="hide"><div class="b">Room<div id="rc" class="code"></div><button onclick="ready()">READY UP</button><div id="st"></div></div><div class="b"><div class="ps" id="ps"></div></div><div class="b"><div class="t" id="table"><div class="center"><div class="target">TARGET</div><div class="points">101 POINTS</div><span class="small">100+ points = eliminated</span></div></div></div>
-<div class="b"><div class="row"><button onclick="draw()">DRAW</button><button onclick="discard()">DISCARD</button><button onclick="declare()">DECLARE</button></div><div id="hand" class="hand"></div></div>
-<div class="b"><b>Scoring</b><div class="small">Round खत्म होने पर winner को 0 और बाकी खिलाड़ियों के unmatched cards के points उनके score में जुड़ते हैं. 101 या उससे अधिक होने पर player eliminate हो जाता है. आखिरी बचा player match winner है.</div></div>
-<div class="b"><b>Chat</b><div id="chatbox" class="chat"></div><div class="row"><input id="msg" placeholder="Message"><button onclick="chat()">Send</button></div></div></div></div>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  background:#050809;
+  color:#eef8f5;
+  font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;
+}
+
+body:before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background:radial-gradient(
+    circle at 50% -10%,
+    #1a5545 0,
+    transparent 35%
+  );
+}
+
+.w{
+  max-width:760px;
+  margin:auto;
+  padding:10px 12px 22px;
+}
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:8px 2px;
+}
+
+.brand{
+  font-size:22px;
+  font-weight:900;
+  letter-spacing:.5px;
+}
+
+.tag{
+  font-size:10px;
+  color:#57dfb5;
+  letter-spacing:1.5px;
+}
+
+.b{
+  background:linear-gradient(
+    145deg,
+    #10191a,
+    #0b1214
+  );
+  border:1px solid #27403d;
+  border-radius:22px;
+  padding:14px;
+  margin:10px 0;
+  box-shadow:0 12px 35px #0008;
+}
+
+input,
+button{
+  padding:13px;
+  border-radius:13px;
+  border:1px solid #304a46;
+  width:100%;
+  margin:4px 0;
+  font-size:15px;
+}
+
+input{
+  background:#091012;
+  color:#fff;
+  outline:none;
+}
+
+input:focus{
+  border-color:#16c79a;
+}
+
+button{
+  background:linear-gradient(
+    135deg,
+    #19d2a1,
+    #0fae88
+  );
+  color:#03110d;
+  font-weight:900;
+  box-shadow:0 5px 15px #0bb98b33;
+}
+
+button:disabled{
+  opacity:.35;
+  cursor:not-allowed;
+  box-shadow:none;
+}
+
+.secondary{
+  background:#182526;
+  color:#d9e8e4;
+}
+
+.row{
+  display:flex;
+  gap:7px;
+}
+
+.row>*{
+  flex:1;
+}
+
+.code{
+  text-align:center;
+  font-size:30px;
+  font-weight:950;
+  letter-spacing:5px;
+  color:#61e4bd;
+  margin:6px 0;
+}
+
+.ps{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+}
+
+.p{
+  background:#111d1e;
+  border-radius:13px;
+  padding:9px;
+  font-size:12px;
+  border:1px solid #263c3a;
+  min-height:58px;
+}
+
+.p b{
+  font-size:13px;
+}
+
+.p.me{
+  border-color:#16c79a;
+}
+
+.p.turn{
+  box-shadow:
+    0 0 0 2px #16c79a44;
+}
+
+.out{
+  opacity:.4;
+  text-decoration:line-through;
+}
+
+.ok{
+  color:#4be3b0;
+}
+
+.t{
+  height:310px;
+  border-radius:24px;
+  background:radial-gradient(
+    circle at 50% 45%,
+    #155242 0,
+    #0b3027 38%,
+    #061512 78%
+  );
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #1e5b4d;
+  box-shadow:inset 0 0 50px #0008;
+}
+
+.center{
+  text-align:center;
+  font-weight:900;
+  letter-spacing:.4px;
+}
+
+.center .target{
+  font-size:10px;
+  color:#63ddba;
+  letter-spacing:2px;
+}
+
+.center .points{
+  font-size:28px;
+}
+
+.center .small{
+  font-weight:500;
+}
+
+.seat{
+  position:absolute;
+  background:#101b1c;
+  border:1px solid #35504c;
+  border-radius:12px;
+  padding:7px 9px;
+  font-size:10px;
+  min-width:72px;
+  text-align:center;
+  box-shadow:0 4px 12px #0007;
+}
+
+.seat.active{
+  border-color:#16c79a;
+  box-shadow:
+    0 0 0 2px #16c79a44,
+    0 4px 14px #0009;
+}
+
+.s0{
+  bottom:8px;
+  left:50%;
+  transform:translateX(-50%);
+}
+
+.s1{
+  left:4px;
+  bottom:25%;
+}
+
+.s2{
+  left:5px;
+  top:9%;
+}
+
+.s3{
+  left:29%;
+  top:5px;
+}
+
+.s4{
+  right:29%;
+  top:5px;
+}
+
+.s5{
+  right:5px;
+  top:9%;
+}
+
+.s6{
+  right:4px;
+  bottom:25%;
+}
+
+.s7{
+  right:50%;
+  bottom:8px;
+  transform:translateX(50%);
+}
+
+.hand{
+  display:flex;
+  gap:6px;
+  overflow:auto;
+  padding:12px 2px 8px;
+  scrollbar-width:none;
+}
+
+.hand::-webkit-scrollbar{
+  display:none;
+}
+
+.c{
+  flex:0 0 52px;
+  height:76px;
+  background:linear-gradient(
+    145deg,
+    #fffdf5,
+    #e8e4d8
+  );
+  color:#18201f;
+  border-radius:10px;
+  text-align:center;
+  padding:6px;
+  font-weight:900;
+  border:2px solid #fff;
+  box-shadow:0 5px 12px #0008;
+  transition:.15s;
+  cursor:pointer;
+}
+
+.c:hover{
+  transform:translateY(-3px);
+}
+
+.sel{
+  border-color:#16c79a;
+  box-shadow:
+    0 0 0 2px #16c79a55,
+    0 7px 14px #0009;
+  transform:translateY(-8px);
+}
+
+.red{
+  color:#d53b49;
+}
+
+.suit{
+  font-size:23px;
+}
+
+.chat{
+  height:110px;
+  overflow:auto;
+  background:#070d0f;
+  border-radius:12px;
+  padding:9px;
+  font-size:12px;
+  border:1px solid #1d302e;
+}
+
+.status{
+  margin-top:8px;
+  text-align:center;
+  color:#9fb3ae;
+  font-size:13px;
+}
+
+.status strong{
+  color:#4be3b0;
+}
+
+.small{
+  font-size:12px;
+  color:#9fb3ae;
+  line-height:1.55;
+}
+
+.titleline{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:7px;
+}
+
+.badge{
+  font-size:10px;
+  color:#06110d;
+  background:#4be0b2;
+  border-radius:999px;
+  padding:4px 8px;
+  font-weight:900;
+}
+
+#message{
+  min-height:35px;
+}
+
+.hide{
+  display:none;
+}
+
+@media(max-width:420px){
+  .t{
+    height:285px;
+  }
+
+  .c{
+    flex-basis:48px;
+    height:71px;
+  }
+
+  .seat{
+    min-width:66px;
+    padding:6px;
+    font-size:9px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="w">
+
+  <!-- HEADER -->
+  <div class="top">
+    <div>
+      <div class="tag">
+        8 PLAYER • REAL-TIME ARENA
+      </div>
+
+      <div class="brand">
+        ♠ RUMMY 101
+      </div>
+    </div>
+
+    <div class="badge">
+      101 POINTS
+    </div>
+  </div>
+
+
+  <!-- HOME -->
+  <div id="home" class="b">
+
+    <input
+      id="name"
+      placeholder="आपका नाम"
+      maxlength="18"
+    >
+
+    <button onclick="createRoom()">
+      Create Room
+    </button>
+
+    <input
+      id="roomCodeInput"
+      placeholder="Room code"
+      maxlength="6"
+      style="text-transform:uppercase"
+    >
+
+    <button onclick="joinRoom()">
+      Join Room
+    </button>
+
+    <div id="homeStatus" class="status"></div>
+
+  </div>
+
+
+  <!-- GAME -->
+  <div id="game" class="hide">
+
+    <!-- ROOM -->
+    <div class="b">
+
+      <div class="titleline">
+        <span>Room</span>
+        <span id="phaseBadge" class="badge">
+          WAITING
+        </span>
+      </div>
+
+      <div id="roomCode" class="code"></div>
+
+      <button
+        id="readyButton"
+        onclick="toggleReady()"
+      >
+        READY UP
+      </button>
+
+      <div id="gameStatus" class="status">
+        Waiting for players...
+      </div>
+
+    </div>
+
+
+    <!-- PLAYERS -->
+    <div class="b">
+
+      <div class="titleline">
+        <b>Players</b>
+        <span id="playerCount" class="small">
+          0/8
+        </span>
+      </div>
+
+      <div id="players" class="ps"></div>
+
+    </div>
+
+
+    <!-- TABLE -->
+    <div class="b">
+
+      <div class="t" id="table">
+
+        <div class="center">
+
+          <div class="target">
+            TARGET
+          </div>
+
+          <div class="points">
+            101 POINTS
+          </div>
+
+          <div class="small">
+            100+ points = eliminated
+          </div>
+
+          <div
+            id="discardInfo"
+            class="small"
+            style="margin-top:8px"
+          >
+            Discard: —
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- HAND / ACTIONS -->
+    <div class="b">
+
+      <div class="titleline">
+        <b>Your Hand</b>
+
+        <span
+          id="cardCount"
+          class="small"
+        >
+          0 cards
+        </span>
+      </div>
+
+      <div
+        id="hand"
+        class="hand"
+      ></div>
+
+      <div class="row">
+
+        <button
+          id="drawButton"
+          onclick="drawCard()"
+          disabled
+        >
+          DRAW
+        </button>
+
+        <button
+          id="discardButton"
+          onclick="discardCard()"
+          disabled
+        >
+          DISCARD
+        </button>
+
+        <button
+          id="declareButton"
+          onclick="declareHand()"
+          disabled
+        >
+          DECLARE
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- SCORING -->
+    <div class="b">
+
+      <b>Scoring</b>
+
+      <div class="small">
+        Round खत्म होने पर winner को 0 और
+        बाकी खिलाड़ियों के unmatched cards
+        के points उनके score में जुड़ते हैं।
+        101 या उससे अधिक होने पर player
+        eliminate हो जाता है।
+        आखिरी बचा player match winner है।
+      </div>
+
+    </div>
+
+
+    <!-- CHAT -->
+    <div class="b">
+
+      <b>Chat</b>
+
+      <div
+        id="chatbox"
+        class="chat"
+      ></div>
+
+      <div class="row">
+
+        <input
+          id="msg"
+          placeholder="Message"
+          maxlength="160"
+        >
+
+        <button onclick="sendChat()">
+          Send
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
 <script>
-let w,my=[],sel=-1;
+let socket = null;
 
-const $=id=>document.getElementById(id);
+let myCards = [];
+let selectedIndex = -1;
 
-function conn(cb){
-  w=new WebSocket(
-    (location.protocol==="https:"?"wss://":"ws://")+location.host
+let myId = null;
+let currentState = null;
+
+const $ = id =>
+  document.getElementById(id);
+
+
+/*
+  Connect WebSocket
+*/
+function connect(onOpen) {
+
+  if (
+    socket &&
+    (
+      socket.readyState === WebSocket.OPEN ||
+      socket.readyState === WebSocket.CONNECTING
+    )
+  ) {
+    return;
+  }
+
+  const protocol =
+    location.protocol === "https:"
+      ? "wss://"
+      : "ws://";
+
+  socket = new WebSocket(
+    protocol + location.host
   );
 
-  w.onopen=cb;
 
-  w.onerror=()=>{
-    alert("Server connection failed. Please try again.");
+  socket.onopen = () => {
+
+    setHomeStatus(
+      "Server connected.",
+      true
+    );
+
+    if (onOpen) {
+      onOpen();
+    }
   };
 
-  w.onclose=()=>{
-    console.log("WebSocket closed");
+
+  socket.onmessage = event => {
+
+    let message;
+
+    try {
+      message = JSON.parse(event.data);
+    } catch {
+      return;
+    }
+
+    handleMessage(message);
   };
 
-  w.onmessage=e=>{
-    let m=JSON.parse(e.data);
 
-    if(m.type==="error"){
-      alert(m.message);
+  socket.onerror = () => {
+
+    setHomeStatus(
+      "Server connection failed. Please try again.",
+      false
+    );
+
+    if (!$("game").classList.contains("hide")) {
+      setGameStatus(
+        "Server connection failed. Refresh and try again.",
+        false
+      );
     }
+  };
 
-    if(m.type==="joined"){
-      $("home").classList.add("hide");
-      $("game").classList.remove("hide");
-      $("rc").textContent=m.code;
-    }
 
-    if(m.type==="state"){
-      render(m.state);
-    }
+  socket.onclose = () => {
 
-    if(m.type==="hand"){
-      my=m.hand;
-      drawHand();
-    }
-
-    if(m.type==="round_end"){
-      alert("Round winner: "+m.winner);
-      render({
-        code:$("rc").textContent,
-        started:false,
-        players:m.scores.map(x=>({
-          name:x.name,
-          score:x.score,
-          out:x.out,
-          ready:false
-        }))
-      });
-    }
-
-    if(m.type==="match_end"){
-      alert("🏆 Match Winner: "+m.winner);
-    }
-
-    if(m.type==="chat"){
-      $("chatbox").innerHTML+=
-        `<div><b>${esc(m.name)}</b>: ${esc(m.text)}</div>`;
-      $("chatbox").scrollTop=$("chatbox").scrollHeight;
+    if (!$("game").classList.contains("hide")) {
+      setGameStatus(
+        "Connection closed. Refresh the page to reconnect.",
+        false
+      );
     }
   };
 }
 
-function create(){
-  const playerName=$("name").value.trim();
 
-  if(!playerName){
-    alert("पहले अपना नाम लिखें");
+/*
+  Handle server messages
+*/
+function handleMessage(message) {
+
+  if (message.type === "error") {
+    alert(message.message);
     return;
   }
 
-  conn(()=>{
-    w.send(JSON.stringify({
-      type:"create",
-      name:playerName
-    }));
+
+  if (message.type === "info") {
+    setGameStatus(
+      message.message,
+      true
+    );
+    return;
+  }
+
+
+  if (message.type === "joined") {
+
+    myId = message.playerId;
+
+    $("home").classList.add("hide");
+    $("game").classList.remove("hide");
+
+    $("roomCode").textContent =
+      message.code;
+
+    return;
+  }
+
+
+  if (message.type === "state") {
+
+    currentState = message.state;
+
+    renderState(message.state);
+
+    return;
+  }
+
+
+  if (message.type === "hand") {
+
+    myCards = message.hand || [];
+
+    selectedIndex = -1;
+
+    renderHand();
+
+    updateActionButtons(message);
+
+    return;
+  }
+
+
+  if (message.type === "round_end") {
+
+    let scoreText =
+      message.scores
+        .map(x =>
+          `${x.name}: ${x.score}`
+        )
+        .join("\n");
+
+    alert(
+      `🏆 Round Winner: ${message.winner}\n\n${scoreText}`
+    );
+
+    return;
+  }
+
+
+  if (message.type === "match_end") {
+
+    alert(
+      `🏆 Match Winner: ${message.winner}`
+    );
+
+    return;
+  }
+
+
+  if (message.type === "chat") {
+
+    const box = $("chatbox");
+
+    box.innerHTML +=
+      `<div>
+        <b>${escapeHtml(message.name)}</b>:
+        ${escapeHtml(message.text)}
+      </div>`;
+
+    box.scrollTop = box.scrollHeight;
+
+    return;
+  }
+}
+
+
+/*
+  CREATE ROOM
+*/
+function createRoom() {
+
+  const playerName =
+    $("name").value.trim();
+
+  if (!playerName) {
+    alert("अपना नाम डालें।");
+    return;
+  }
+
+  connect(() => {
+
+    socket.send(
+      JSON.stringify({
+        type: "create",
+        name: playerName
+      })
+    );
+
   });
 }
 
-function join(){
-  const playerName=$("name").value.trim();
-  const roomCode=$("code").value.trim();
 
-  if(!playerName){
-    alert("पहले अपना नाम लिखें");
+/*
+  JOIN ROOM
+*/
+function joinRoom() {
+
+  const playerName =
+    $("name").value.trim();
+
+  const code =
+    $("roomCodeInput")
+      .value
+      .trim()
+      .toUpperCase();
+
+  if (!playerName) {
+    alert("अपना नाम डालें।");
     return;
   }
 
-  if(!roomCode){
-    alert("Room code डालें");
+  if (!code) {
+    alert("Room code डालें।");
     return;
   }
 
-  conn(()=>{
-    w.send(JSON.stringify({
-      type:"join",
-      name:playerName,
-      code:roomCode
-    }));
+  connect(() => {
+
+    socket.send(
+      JSON.stringify({
+        type: "join",
+        name: playerName,
+        code
+      })
+    );
+
   });
 }
 
-function ready(){
-  if(!w || w.readyState!==1){
-    alert("Server से connection नहीं है");
+
+/*
+  READY / UNREADY
+*/
+function toggleReady() {
+
+  if (!socketReady()) {
     return;
   }
 
-  w.send(JSON.stringify({
-    type:"ready",
-    value:true
-  }));
-}
-
-function draw(){
-  if(!w || w.readyState!==1){
-    alert("Server से connection नहीं है");
+  if (
+    !currentState ||
+    currentState.started
+  ) {
     return;
   }
 
-  w.send(JSON.stringify({type:"draw"}));
-}
+  const me =
+    currentState.players.find(
+      p => p.id === myId
+    );
 
-function discard(){
-  if(sel<0){
-    alert("Card चुनें");
-    return;
-  }
+  const newValue =
+    !(me && me.ready);
 
-  w.send(JSON.stringify({
-    type:"discard",
-    index:sel
-  }));
-
-  sel=-1;
-}
-
-function declare(){
-  w.send(JSON.stringify({type:"declare"}));
-}
-
-function chat(){
-  const text=$("msg").value.trim();
-
-  if(text){
-    w.send(JSON.stringify({
-      type:"chat",
-      text:text
-    }));
-
-    $("msg").value="";
-  }
-}
-
-function render(s){
-  $("rc").textContent=s.code||$("rc").textContent;
-
-  $("st").textContent=
-    s.started
-    ? "Round "+s.round+" • Turn: "+(s.players[s.turn]?.name||"")
-    : "Players "+(s.players?.length||0)+"/8 • Ready";
-
-  $("ps").innerHTML=(s.players||[]).map(p=>
-    `<div class="p ${p.out?"out":""}">
-      <b>${esc(p.name)}</b><br>
-      ${p.score} pts
-      ${p.out?"• ELIMINATED":p.ready?"• ✓ Ready":"• Waiting"}
-    </div>`
-  ).join("");
-
-  $("table").querySelectorAll(".seat").forEach(x=>x.remove());
-
-  (s.players||[]).forEach((p,i)=>{
-    let q=document.createElement("div");
-    q.className="seat s"+i;
-    q.innerHTML=
-      esc(p.name)+"<br>"+p.score+" pts";
-    $("table").appendChild(q);
-  });
-}
-
-function drawHand(){
-  $("hand").innerHTML=my.map((c,i)=>
-    `<div class="c ${i===sel?"sel ":""}${c.s==="♥"||c.s==="♦"?"red":""}"
-      onclick="sel=${i};drawHand()">
-      ${c.r}
-      <div class="suit">${c.s}</div>
-    </div>`
-  ).join("");
-}
-
-function esc(x){
-  return String(x).replace(
-    /[&<>"']/g,
-    c=>({
-      "&":"&amp;",
-      "<":"&lt;",
-      ">":"&gt;",
-      '"':"&quot;",
-      "'":"&#39;"
-    }[c])
+  socket.send(
+    JSON.stringify({
+      type: "ready",
+      value: newValue
+    })
   );
 }
+
+
+/*
+  DRAW
+*/
+function drawCard() {
+
+  if (!socketReady()) {
+    return;
+  }
+
+  socket.send(
+    JSON.stringify({
+      type: "draw"
+    })
+  );
+}
+
+
+/*
+  SELECT CARD
+*/
+function selectCard(index) {
+
+  selectedIndex = index;
+
+  renderHand();
+
+  updateDiscardButton();
+}
+
+
+/*
+  DISCARD
+*/
+function discardCard() {
+
+  if (!socketReady()) {
+    return;
+  }
+
+  if (selectedIndex < 0) {
+    alert("पहले एक card चुनें।");
+    return;
+  }
+
+  socket.send(
+    JSON.stringify({
+      type: "discard",
+      index: selectedIndex
+    })
+  );
+}
+
+
+/*
+  DECLARE
+*/
+function declareHand() {
+
+  if (!socketReady()) {
+    return;
+  }
+
+  socket.send(
+    JSON.stringify({
+      type: "declare"
+    })
+  );
+}
+
+
+/*
+  CHAT
+*/
+function sendChat() {
+
+  if (!socketReady()) {
+    return;
+  }
+
+  const input = $("msg");
+
+  const text =
+    input.value.trim();
+
+  if (!text) {
+    return;
+  }
+
+  socket.send(
+    JSON.stringify({
+      type: "chat",
+      text
+    })
+  );
+
+  input.value = "";
+}
+
+
+/*
+  RENDER GAME STATE
+*/
+function renderState(state) {
+
+  $("roomCode").textContent =
+    state.code || "—";
+
+  const players =
+    state.players || [];
+
+  $("playerCount").textContent =
+    `${players.length}/8`;
+
+
+  /*
+    Phase
+  */
+  let phaseText =
+    "WAITING";
+
+  if (state.started) {
+
+    if (state.phase === "draw") {
+      phaseText = "DRAW";
+    }
+
+    if (state.phase === "discard") {
+      phaseText = "DISCARD";
+    }
+
+    if (state.phase === "declare") {
+      phaseText = "DECLARE";
+    }
+  }
+
+  $("phaseBadge").textContent =
+    phaseText;
+
+
+  /*
+    Status
+  */
+  if (!state.started) {
+
+    if (players.length < 2) {
+
+      setGameStatus(
+        `Players ${players.length}/8 • कम से कम 2 players चाहिए`,
+        false
+      );
+
+    } else {
+
+      const readyCount =
+        players.filter(p => p.ready).length;
+
+      setGameStatus(
+        `Players ${players.length}/8 • ${readyCount} Ready`,
+        false
+      );
+    }
+
+  } else {
+
+    const current =
+      players[state.turn];
+
+    if (current) {
+
+      const isMe =
+        current.id === myId;
+
+      if (isMe) {
+
+        if (state.phase === "draw") {
+          setGameStatus(
+            "आपकी turn है — DRAW करें।",
+            true
+          );
+        }
+
+        if (state.phase === "discard") {
+          setGameStatus(
+            "अब एक card चुनकर DISCARD करें।",
+            true
+          );
+        }
+
+        if (state.phase === "declare") {
+          setGameStatus(
+            "आपका hand valid है — DECLARE करें।",
+            true
+          );
+        }
+
+      } else {
+
+        setGameStatus(
+          `Round ${state.round} • Turn: ${current.name}`,
+          false
+        );
+      }
+    }
+  }
+
+
+  /*
+    Ready button
+  */
+  const me =
+    players.find(
+      p => p.id === myId
+    );
+
+  if (me) {
+
+    if (state.started) {
+
+      $("readyButton").disabled = true;
+      $("readyButton").textContent =
+        "GAME RUNNING";
+
+    } else {
+
+      $("readyButton").disabled = false;
+
+      $("readyButton").textContent =
+        me.ready
+          ? "CANCEL READY"
+          : "READY UP";
+    }
+  }
+
+
+  /*
+    Players
+  */
+  $("players").innerHTML =
+    players
+      .map((player, index) => {
+
+        const classes = [
+          "p"
+        ];
+
+        if (player.id === myId) {
+          classes.push("me");
+        }
+
+        if (
+          state.started &&
+          index === state.turn
+        ) {
+          classes.push("turn");
+        }
+
+        if (player.out) {
+          classes.push("out");
+        }
+
+        let status =
+          player.out
+            ? "ELIMINATED"
+            : player.ready
+              ? "✓ Ready"
+              : "Waiting";
+
+        if (
+          state.started &&
+          index === state.turn
+        ) {
+          status += " • TURN";
+        }
+
+        return `
+          <div class="${classes.join(" ")}">
+
+            <b>
+              ${escapeHtml(player.name)}
+              ${player.id === myId ? " (You)" : ""}
+            </b>
+
+            <br>
+
+            ${player.score} pts
+            • ${status}
+
+          </div>
+        `;
+      })
+      .join("");
+
+
+  /*
+    Table seats
+  */
+  $("table")
+    .querySelectorAll(".seat")
+    .forEach(el => el.remove());
+
+  players.forEach((player, index) => {
+
+    const seat =
+      document.createElement("div");
+
+    seat.className =
+      `seat s${index}`;
+
+    if (
+      state.started &&
+      index === state.turn
+    ) {
+      seat.classList.add("active");
+    }
+
+    seat.innerHTML =
+      `${escapeHtml(player.name)}
+       <br>
+       ${player.score} pts`;
+
+    $("table").appendChild(seat);
+  });
+
+
+  /*
+    Discard top
+  */
+  if (state.discardTop) {
+
+    $("discardInfo").textContent =
+      `Discard: ${state.discardTop.r}${state.discardTop.s}`;
+
+  } else {
+
+    $("discardInfo").textContent =
+      "Discard: —";
+  }
+}
+
+
+/*
+  RENDER HAND
+*/
+function renderHand() {
+
+  $("cardCount").textContent =
+    `${myCards.length} cards`;
+
+  $("hand").innerHTML =
+    myCards
+      .map((card, index) => {
+
+        const selected =
+          index === selectedIndex
+            ? "sel"
+            : "";
+
+        const red =
+          card.s === "♥" ||
+          card.s === "♦"
+            ? "red"
+            : "";
+
+        return `
+          <div
+            class="c ${selected} ${red}"
+            onclick="selectCard(${index})"
+          >
+            ${escapeHtml(card.r)}
+
+            <div class="suit">
+              ${escapeHtml(card.s)}
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+}
+
+
+/*
+  Update action buttons from server.
+*/
+function updateActionButtons(handState) {
+
+  $("drawButton").disabled =
+    !handState.canDraw;
+
+  $("discardButton").disabled =
+    !handState.canDiscard ||
+    selectedIndex < 0;
+
+  $("declareButton").disabled =
+    !handState.canDeclare;
+}
+
+
+/*
+  When card selection changes
+*/
+function updateDiscardButton() {
+
+  if (!currentState) {
+    return;
+  }
+
+  const myTurn =
+    currentState.started &&
+    currentState.players[currentState.turn]?.id === myId;
+
+  const canDiscard =
+    myTurn &&
+    currentState.phase === "discard";
+
+  $("discardButton").disabled =
+    !canDiscard ||
+    selectedIndex < 0;
+}
+
+
+/*
+  Socket ready check
+*/
+function socketReady() {
+
+  if (
+    !socket ||
+    socket.readyState !== WebSocket.OPEN
+  ) {
+
+    alert(
+      "Server से connection नहीं है। Page refresh करके फिर कोशिश करें।"
+    );
+
+    return false;
+  }
+
+  return true;
+}
+
+
+/*
+  Status helpers
+*/
+function setHomeStatus(text, good) {
+
+  $("homeStatus").textContent =
+    text;
+
+  $("homeStatus").style.color =
+    good
+      ? "#4be3b0"
+      : "#ff8b8b";
+}
+
+function setGameStatus(text, good) {
+
+  $("gameStatus").innerHTML =
+    `<strong>${escapeHtml(text)}</strong>`;
+
+  $("gameStatus").style.color =
+    good
+      ? "#4be3b0"
+      : "#9fb3ae";
+}
+
+
+/*
+  Prevent XSS
+*/
+function escapeHtml(value) {
+
+  return String(value)
+    .replace(
+      /[&<>"']/g,
+      char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char]
+    );
+}
+
+
+/*
+  Enter key for chat
+*/
+$("msg").addEventListener(
+  "keydown",
+  event => {
+
+    if (event.key === "Enter") {
+      sendChat();
+    }
+
+  }
+);
 </script>
+
+</body>
+</html>
