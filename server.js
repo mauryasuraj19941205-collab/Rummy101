@@ -1,48 +1,45 @@
 const express = require("express");
 const http = require("http");
-const { WebSocketServer } = require("ws");
 const path = require("path");
 const crypto = require("crypto");
+const { WebSocketServer } = require("ws");
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
+// index.html is in the repository root.
 app.use(express.static(__dirname));
+app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
 const PORT = Number(process.env.PORT) || 3000;
 const MAX_PLAYERS = 8;
-const DISCONNECT_GRACE = 10 * 60 * 1000;
+const RECONNECT_GRACE_MS = 5 * 60 * 1000;
+const HEARTBEAT_MS = 20 * 1000;
 
 const SUITS = ["♠", "♥", "♦", "♣"];
-const RANKS = [
-  "A", "2", "3", "4", "5", "6", "7",
-  "8", "9", "10", "J", "Q", "K"
-];
+const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 
 const rooms = new Map();
-const playersByToken = new Map();
 
-function send(ws, data) {
+function send(ws, message) {
   if (ws && ws.readyState === 1) {
-    try {
-      ws.send(JSON.stringify(data));
-    } catch (_) {}
+    ws.send(JSON.stringify(message));
   }
 }
 
-function makeCode() {
+function makeId() {
+  return crypto.randomBytes(9).toString("base64url");
+}
+
+function makeRoomCode() {
   let code;
 
   do {
-    code = crypto.randomBytes(4).toString("hex").slice(0, 6).toUpperCase();
+    code = crypto.randomBytes(3).toString("hex").toUpperCase();
   } while (rooms.has(code));
 
   return code;
-}
-
-function makeToken() {
-  return crypto.randomBytes(24).toString("hex");
 }
 
 function rankValue(rank) {
@@ -54,70 +51,58 @@ function rankValue(rank) {
 }
 
 function pointValue(rank) {
-  if (["A", "J", "Q", "K"].includes(rank)) return 10;
-  return Number(rank);
+  return ["A", "J", "Q", "K"].includes(rank)
+    ? 10
+    : Number(rank);
 }
 
-function makeDeck() {
+function shuffledDeck() {
   const deck = [];
 
-  // Two normal decks
   for (let copy = 0; copy < 2; copy++) {
     for (const suit of SUITS) {
       for (const rank of RANKS) {
         deck.push({
-          s: suit,
-          r: rank,
-          id: crypto.randomBytes(8).toString("hex")
+          suit,
+          rank,
+          id: makeId()
         });
       }
     }
   }
 
-  // Four printed jokers
   for (let i = 0; i < 4; i++) {
     deck.push({
-      s: "★",
-      r: "J",
-      id: crypto.randomBytes(8).toString("hex")
+      suit: "★",
+      rank: "J",
+      id: makeId()
     });
   }
 
-  return shuffle(deck);
-}
-
-function shuffle(array) {
-  const a = array.slice();
-
-  for (let i = a.length - 1; i > 0; i--) {
+  for (let i = deck.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+    [deck[i], deck[j]] = [deck[j], deck[i]];
   }
 
-  return a;
+  return deck;
 }
 
-/*
-  Pure sequence:
-  - minimum 3 cards
-  - no joker
-  - same suit
-  - consecutive ranks
-*/
-function isPureSequence(group) {
-  if (!Array.isArray(group) || group.length < 3) return false;
-  if (group.some(card => card.s === "★")) return false;
+function pureSequence(group) {
+  if (group.length < 3) return false;
+  if (group.some(c => c.suit === "★")) return false;
 
-  const sorted = group
-    .slice()
-    .sort((a, b) => rankValue(a.r) - rankValue(b.r));
+  const cards = [...group].sort(
+    (a, b) => rankValue(a.rank) - rankValue(b.rank)
+  );
 
-  if (new Set(sorted.map(c => c.s)).size !== 1) return false;
+  if (new Set(cards.map(c => c.suit)).size !== 1) {
+    return false;
+  }
 
-  for (let i = 1; i < sorted.length; i++) {
+  for (let i = 1; i < cards.length; i++) {
     if (
-      rankValue(sorted[i].r) !==
-      rankValue(sorted[i - 1].r) + 1
+      rankValue(cards[i].rank) !==
+      rankValue(cards[i - 1].rank) + 1
     ) {
       return false;
     }
@@ -126,94 +111,71 @@ function isPureSequence(group) {
   return true;
 }
 
-/*
-  Sequence with jokers.
-*/
-function isSequence(group) {
-  if (!Array.isArray(group) || group.length < 3) return false;
+function sequence(group) {
+  if (group.length < 3) return false;
 
-  const jokers = group.filter(c => c.s === "★").length;
+  const jokers = group.filter(c => c.suit === "★").length;
 
   const normal = group
-    .filter(c => c.s !== "★")
-    .sort((a, b) => rankValue(a.r) - rankValue(b.r));
+    .filter(c => c.suit !== "★")
+    .sort((a, b) => rankValue(a.rank) - rankValue(b.rank));
 
-  if (!normal.length) {
-    return group.length >= 3;
-  }
+  if (!normal.length) return false;
 
-  if (new Set(normal.map(c => c.s)).size !== 1) {
+  if (new Set(normal.map(c => c.suit)).size !== 1) {
     return false;
   }
 
-  let requiredJokers = 0;
+  let gaps = 0;
 
   for (let i = 1; i < normal.length; i++) {
-    const gap =
-      rankValue(normal[i].r) -
-      rankValue(normal[i - 1].r);
+    const diff =
+      rankValue(normal[i].rank) -
+      rankValue(normal[i - 1].rank);
 
-    if (gap <= 0) return false;
+    if (diff <= 0) return false;
 
-    requiredJokers += gap - 1;
+    gaps += diff - 1;
   }
 
-  return (
-    requiredJokers <= jokers &&
-    normal.length + jokers >= 3
-  );
+  return gaps <= jokers &&
+    normal.length + jokers >= 3;
 }
 
-/*
-  Set:
-  - 3 or 4 cards
-  - same rank
-  - different suits
-*/
-function isSet(group) {
-  if (!Array.isArray(group)) return false;
-  if (group.length < 3 || group.length > 4) return false;
+function setGroup(group) {
+  const normal = group.filter(c => c.suit !== "★");
 
-  const normal = group.filter(c => c.s !== "★");
-
-  if (new Set(normal.map(c => c.r)).size !== 1) {
+  if (group.length < 3 || group.length > 4) {
     return false;
   }
 
-  if (new Set(normal.map(c => c.s)).size !== normal.length) {
+  if (new Set(normal.map(c => c.rank)).size !== 1) {
     return false;
   }
 
-  return true;
+  return new Set(normal.map(c => c.suit)).size === normal.length;
 }
 
-/*
-  Valid 13-card declaration:
-  - entire hand must be grouped
-  - at least 2 sequences
-  - at least 1 pure sequence
-*/
-function isValidHand(hand) {
-  if (!Array.isArray(hand) || hand.length !== 13) {
-    return false;
-  }
+function validDeclaration(hand) {
+  if (hand.length !== 13) return false;
 
-  function solve(remaining, groups) {
+  function search(remaining, groups) {
     if (remaining.length === 0) {
-      const sequences = groups.filter(isSequence);
-      const pure = groups.some(isPureSequence);
-
-      return sequences.length >= 2 && pure;
+      return (
+        groups.filter(sequence).length >= 2 &&
+        groups.some(pureSequence)
+      );
     }
 
-    // Avoid extremely expensive recursion
-    if (remaining.length > 13) return false;
-
-    for (let mask = 1; mask < (1 << remaining.length); mask++) {
+    for (
+      let mask = 1;
+      mask < (1 << remaining.length);
+      mask++
+    ) {
       let count = 0;
 
-      for (let bit = mask; bit; bit >>= 1) {
-        count += bit & 1;
+      for (let x = mask; x; x >>= 1) {
+        count += x & 1;
       }
 
       if (count < 3 || count > 4) continue;
@@ -221,16 +183,16 @@ function isValidHand(hand) {
       const group = [];
       const rest = [];
 
-      for (let i = 0; i < remaining.length; i++) {
+      remaining.forEach((card, i) => {
         if (mask & (1 << i)) {
-          group.push(remaining[i]);
+          group.push(card);
         } else {
-          rest.push(remaining[i]);
+          rest.push(card);
         }
-      }
+      });
 
-      if (isSequence(group) || isSet(group)) {
-        if (solve(rest, groups.concat([group]))) {
+      if (sequence(group) || setGroup(group)) {
+        if (search(rest, groups.concat([group]))) {
           return true;
         }
       }
@@ -239,113 +201,43 @@ function isValidHand(hand) {
     return false;
   }
 
-  return solve(hand, []);
+  return search(hand, []);
 }
 
 function handScore(hand) {
-  return hand.reduce((total, card) => {
-    if (card.s === "★") return total;
-    return total + pointValue(card.r);
-  }, 0);
+  return hand.reduce(
+    (sum, card) =>
+      sum + (card.suit === "★" ? 0 : pointValue(card.rank)),
+    0
+  );
 }
 
 function activePlayers(room) {
-  return room.players.filter(player => !player.out);
-}
-
-function connectedActivePlayers(room) {
-  return activePlayers(room).filter(player => player.connected);
-}
-
-function currentPlayer(room) {
-  return room.players[room.turn];
+  return room.players.filter(p => !p.out);
 }
 
 function publicState(room) {
-  const current = currentPlayer(room);
-
   return {
     code: room.code,
     started: room.started,
     round: room.round,
     turn: room.turn,
 
-    discardTop:
-      room.discard.length
-        ? room.discard[room.discard.length - 1]
-        : null,
+    discard: room.discard.at(-1) || null,
 
-    deckCount: room.deck.length,
-
-    phase: room.phase,
-
-    players: room.players.map((player, index) => ({
-      seat: index,
-      name: player.name,
-      score: player.score,
-      ready: player.ready,
-      out: player.out,
-      connected: player.connected,
-      cards: room.started && !player.out
-        ? player.hand.length
-        : 0
-    })),
-
-    currentPlayer:
-      current && !current.out
-        ? current.name
-        : null
+    players: room.players.map((p, seat) => ({
+      seat,
+      name: p.name,
+      score: p.score,
+      ready: p.ready,
+      out: p.out,
+      connected: !!p.ws,
+      cards:
+        room.started && !p.out
+          ? p.hand.length
+          : 0
+    }))
   };
-}
-
-function sendState(room) {
-  broadcast(room, {
-    type: "state",
-    state: publicState(room)
-  });
-
-  sendHands(room);
-}
-
-function sendHands(room) {
-  for (const player of room.players) {
-    if (!player.ws) continue;
-
-    const isTurn =
-      room.started &&
-      currentPlayer(room) === player;
-
-    let canDraw = false;
-    let canDiscard = false;
-    let canDeclare = false;
-    let canEndTurn = false;
-
-    if (isTurn) {
-      if (room.phase === "draw") {
-        canDraw = true;
-      }
-
-      if (room.phase === "discard") {
-        canDiscard = true;
-      }
-
-      if (room.phase === "declare") {
-        canDeclare = true;
-        canEndTurn = true;
-      }
-    }
-
-    send(player.ws, {
-      type: "hand",
-      hand: player.hand,
-      permissions: {
-        canDraw,
-        canDiscard,
-        canDeclare,
-        canEndTurn
-      }
-    });
-  }
 }
 
 function broadcast(room, message) {
@@ -354,129 +246,150 @@ function broadcast(room, message) {
   }
 }
 
-function startRound(room) {
-  const players = activePlayers(room);
+function broadcastState(room) {
+  broadcast(room, {
+    type: "state",
+    state: publicState(room)
+  });
+}
 
-  if (players.length < 2) {
-    broadcast(room, {
-      type: "error",
-      message: "कम से कम 2 active players चाहिए।"
-    });
-    return;
+function sendHand(player, room) {
+  send(player.ws, {
+    type: "hand",
+
+    hand:
+      room.started && !player.out
+        ? player.hand
+        : [],
+
+    drawn: !!player.drawn,
+
+    canDraw:
+      room.started &&
+      room.turn === room.players.indexOf(player) &&
+      !player.drawn &&
+      !player.out
+  });
+}
+
+function sendFullState(player, room) {
+  send(player.ws, {
+    type: "joined",
+    code: room.code,
+    sessionId: player.sessionId,
+    resumed: true
+  });
+
+  send(player.ws, {
+    type: "state",
+    state: publicState(room)
+  });
+
+  sendHand(player, room);
+}
+
+function refillDeck(room) {
+  if (room.deck.length > 0) {
+    return true;
   }
 
-  if (!players.every(player => player.ready && player.connected)) {
-    broadcast(room, {
-      type: "error",
-      message: "सभी players को READY और connected होना चाहिए।"
-    });
-    return;
+  if (room.discard.length <= 1) {
+    return false;
   }
 
-  room.deck = makeDeck();
+  const top = room.discard.at(-1);
+
+  room.deck = room.discard.slice(0, -1);
+  room.discard = [top];
+
+  for (let i = room.deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+
+    [room.deck[i], room.deck[j]] =
+      [room.deck[j], room.deck[i]];
+  }
+
+  return room.deck.length > 0;
+}
+
+function startGame(room) {
+  room.deck = shuffledDeck();
   room.discard = [];
+  room.started = true;
+  room.round = Math.max(1, room.round);
 
   for (const player of room.players) {
     player.hand = [];
     player.drawn = false;
   }
 
-  // Deal 13 cards to every active player
   for (let i = 0; i < 13; i++) {
-    for (const player of players) {
-      const card = room.deck.pop();
-
-      if (card) {
-        player.hand.push(card);
-      }
+    for (const player of activePlayers(room)) {
+      player.hand.push(room.deck.pop());
     }
   }
 
-  const firstDiscard = room.deck.pop();
+  room.discard.push(room.deck.pop());
 
-  if (firstDiscard) {
-    room.discard.push(firstDiscard);
-  }
-
-  room.turn = 0;
-
-  // Skip eliminated players
-  while (
-    room.turn < room.players.length &&
-    room.players[room.turn].out
-  ) {
-    room.turn++;
-  }
-
-  if (room.turn >= room.players.length) {
-    room.turn = 0;
-  }
-
-  room.started = true;
-  room.phase = "draw";
+  room.turn =
+    activePlayers(room).length
+      ? room.players.indexOf(activePlayers(room)[0])
+      : 0;
 
   for (const player of room.players) {
+    sendHand(player, room);
+  }
+
+  broadcastState(room);
+}
+
+function nextTurn(room) {
+  if (!room.players.length) return;
+
+  let index = room.turn;
+
+  for (let i = 0; i < room.players.length; i++) {
+    index = (index + 1) % room.players.length;
+
+    const player = room.players[index];
+
+    if (!player.out) {
+      room.turn = index;
+      player.drawn = false;
+      break;
+    }
+  }
+
+  for (const player of room.players) {
+    sendHand(player, room);
+  }
+
+  broadcastState(room);
+}
+
+function finishRound(room, winner) {
+  for (const player of activePlayers(room)) {
+    player.score +=
+      player === winner
+        ? 0
+        : handScore(player.hand);
+
+    if (player.score >= 101) {
+      player.out = true;
+    }
+
     player.ready = false;
     player.drawn = false;
   }
 
   broadcast(room, {
-    type: "round_started",
-    message: `Round ${room.round} शुरू हो गया।`
-  });
-
-  sendState(room);
-}
-
-function advanceTurn(room) {
-  if (!room.started) return;
-
-  let attempts = 0;
-
-  do {
-    room.turn = (room.turn + 1) % room.players.length;
-    attempts++;
-
-    if (attempts > room.players.length) {
-      room.started = false;
-      return;
-    }
-  } while (
-    room.players[room.turn].out ||
-    !room.players[room.turn].connected
-  );
-
-  room.phase = "draw";
-
-  for (const player of room.players) {
-    player.drawn = false;
-  }
-
-  sendState(room);
-}
-
-function finishRound(room, winner) {
-  for (const player of activePlayers(room)) {
-    if (player !== winner) {
-      player.score += handScore(player.hand);
-    }
-  }
-
-  const eliminated = activePlayers(room).filter(
-    player => player.score >= 101
-  );
-
-  for (const player of eliminated) {
-    player.out = true;
-  }
-
-  broadcast(room, {
     type: "round_end",
     winner: winner.name,
-    scores: room.players.map(player => ({
-      name: player.name,
-      score: player.score,
-      out: player.out
+
+    scores: room.players.map(p => ({
+      name: p.name,
+      score: p.score,
+      out: p.out
     }))
   });
 
@@ -484,7 +397,6 @@ function finishRound(room, winner) {
 
   if (remaining.length <= 1) {
     room.started = false;
-    room.phase = "waiting";
 
     broadcast(room, {
       type: "match_end",
@@ -493,148 +405,399 @@ function finishRound(room, winner) {
         winner.name
     });
 
-    sendState(room);
+    broadcastState(room);
     return;
   }
 
-  room.round++;
   room.started = false;
-  room.phase = "waiting";
+  room.round += 1;
+  room.turn = room.players.indexOf(remaining[0]);
 
   for (const player of room.players) {
-    player.ready = false;
-    player.drawn = false;
     player.hand = [];
   }
 
-  sendState(room);
-}
+  broadcastState(room);
 
-function refillDeck(room) {
-  if (room.deck.length > 0) return true;
-
-  if (room.discard.length <= 1) {
-    return false;
+  for (const player of room.players) {
+    sendHand(player, room);
   }
-
-  const top =
-    room.discard[room.discard.length - 1];
-
-  const rest =
-    room.discard.slice(0, -1);
-
-  room.deck = shuffle(rest);
-  room.discard = [top];
-
-  return room.deck.length > 0;
 }
 
-function createPlayer(name) {
-  const token = makeToken();
+function disconnectPlayer(room, player) {
+  player.ws = null;
+  player.disconnectedAt = Date.now();
 
-  const player = {
-    token,
-    name: String(name || "Player")
-      .trim()
-      .slice(0, 18) || "Player",
+  broadcastState(room);
 
-    ws: null,
-    connected: false,
-    disconnectedAt: null,
+  clearTimeout(player.reconnectTimer);
 
-    ready: false,
-    score: 0,
-    out: false,
+  player.reconnectTimer = setTimeout(() => {
+    if (player.ws) return;
 
-    hand: [],
-    drawn: false
-  };
+    const index = room.players.indexOf(player);
 
-  playersByToken.set(token, player);
+    if (index === -1) return;
 
-  return player;
-}
+    const wasTurn = room.turn === index;
 
-function attachPlayer(room, player, ws) {
-  if (player.ws && player.ws !== ws) {
-    try {
-      player.ws.close(4000, "Reconnected elsewhere");
-    } catch (_) {}
-  }
-
-  player.ws = ws;
-  player.connected = true;
-  player.disconnectedAt = null;
-
-  ws._room = room;
-  ws._player = player;
-
-  send(ws, {
-    type: "joined",
-    code: room.code,
-    token: player.token,
-    resumed: true
-  });
-
-  sendState(room);
-}
-
-function cleanupDisconnectedPlayers() {
-  const now = Date.now();
-
-  for (const room of rooms.values()) {
-    const toRemove = room.players.filter(player => {
-      return (
-        !player.connected &&
-        player.disconnectedAt &&
-        now - player.disconnectedAt > DISCONNECT_GRACE
-      );
-    });
-
-    for (const player of toRemove) {
-      room.players = room.players.filter(p => p !== player);
-      playersByToken.delete(player.token);
-
-      if (
-        room.started &&
-        currentPlayer(room) === player
-      ) {
-        advanceTurn(room);
-      }
-    }
+    room.players.splice(index, 1);
 
     if (room.players.length === 0) {
       rooms.delete(room.code);
-    } else {
-      sendState(room);
+      return;
     }
-  }
+
+    if (wasTurn && room.started) {
+      room.turn = index % room.players.length;
+    } else if (room.turn > index) {
+      room.turn -= 1;
+    }
+
+    broadcastState(room);
+
+    for (const p of room.players) {
+      sendHand(p, room);
+    }
+  }, RECONNECT_GRACE_MS);
 }
 
-setInterval(cleanupDisconnectedPlayers, 30 * 1000);
+wss.on("connection", ws => {
+  ws.isAlive = true;
 
-/*
-  WebSocket heartbeat.
-  Render/network interruptions can otherwise leave stale sockets.
-*/
+  ws.on("pong", () => {
+    ws.isAlive = true;
+  });
+
+  let room = null;
+  let player = null;
+
+  ws.on("message", raw => {
+    let msg;
+
+    try {
+      msg = JSON.parse(raw.toString());
+    } catch {
+      return;
+    }
+
+    // ---------- RESUME AFTER REFRESH / DISCONNECT ----------
+
+    if (msg.type === "resume") {
+      const code =
+        String(msg.code || "")
+          .trim()
+          .toUpperCase();
+
+      const found = rooms.get(code);
+
+      const sessionId =
+        String(msg.sessionId || "");
+
+      const foundPlayer =
+        found?.players.find(
+          p => p.sessionId === sessionId
+        );
+
+      if (!found || !foundPlayer) {
+        return send(ws, {
+          type: "error",
+          message:
+            "Session expired. Please join the room again."
+        });
+      }
+
+      room = found;
+      player = foundPlayer;
+
+      clearTimeout(player.reconnectTimer);
+
+      player.reconnectTimer = null;
+      player.ws = ws;
+      player.disconnectedAt = null;
+
+      sendFullState(player, room);
+      broadcastState(room);
+
+      return;
+    }
+
+    // ---------- CREATE ROOM ----------
+
+    if (msg.type === "create") {
+      const name =
+        String(msg.name || "Player")
+          .trim()
+          .slice(0, 18) ||
+        "Player";
+
+      room = {
+        code: makeRoomCode(),
+        players: [],
+        started: false,
+        round: 1,
+        turn: 0,
+        deck: [],
+        discard: []
+      };
+
+      player = {
+        sessionId: makeId(),
+        name,
+        ws,
+        score: 0,
+        ready: false,
+        out: false,
+        hand: [],
+        drawn: false,
+        reconnectTimer: null,
+        disconnectedAt: null
+      };
+
+      room.players.push(player);
+      rooms.set(room.code, room);
+
+      send(ws, {
+        type: "joined",
+        code: room.code,
+        sessionId: player.sessionId,
+        resumed: false
+      });
+
+      broadcastState(room);
+      return;
+    }
+
+    // ---------- JOIN ROOM ----------
+
+    if (msg.type === "join") {
+      const code =
+        String(msg.code || "")
+          .trim()
+          .toUpperCase();
+
+      room = rooms.get(code);
+
+      if (
+        !room ||
+        room.started ||
+        room.players.length >= MAX_PLAYERS
+      ) {
+        return send(ws, {
+          type: "error",
+          message:
+            "Room unavailable or game already started."
+        });
+      }
+
+      const name =
+        String(msg.name || "Player")
+          .trim()
+          .slice(0, 18) ||
+        "Player";
+
+      player = {
+        sessionId: makeId(),
+        name,
+        ws,
+        score: 0,
+        ready: false,
+        out: false,
+        hand: [],
+        drawn: false,
+        reconnectTimer: null,
+        disconnectedAt: null
+      };
+
+      room.players.push(player);
+
+      send(ws, {
+        type: "joined",
+        code: room.code,
+        sessionId: player.sessionId,
+        resumed: false
+      });
+
+      broadcastState(room);
+      return;
+    }
+
+    if (!room || !player) return;
+
+    // ---------- READY ----------
+
+    if (msg.type === "ready") {
+      if (room.started || player.out) return;
+
+      player.ready = !!msg.value;
+
+      const active = activePlayers(room);
+
+      if (
+        active.length >= 2 &&
+        active.every(p => p.ready)
+      ) {
+        startGame(room);
+      } else {
+        broadcastState(room);
+      }
+
+      return;
+    }
+
+    // ---------- DRAW ----------
+
+    if (msg.type === "draw") {
+      const index = room.players.indexOf(player);
+
+      if (
+        !room.started ||
+        room.turn !== index ||
+        player.out ||
+        player.drawn
+      ) {
+        return;
+      }
+
+      if (!refillDeck(room)) {
+        return send(player.ws, {
+          type: "error",
+          message: "No cards left to draw."
+        });
+      }
+
+      player.hand.push(room.deck.pop());
+      player.drawn = true;
+
+      sendHand(player, room);
+      broadcastState(room);
+
+      return;
+    }
+
+    // ---------- DISCARD ----------
+
+    if (msg.type === "discard") {
+      const index = room.players.indexOf(player);
+
+      if (
+        !room.started ||
+        room.turn !== index ||
+        player.out ||
+        !player.drawn
+      ) {
+        return;
+      }
+
+      const cardIndex = Number(msg.index);
+
+      if (
+        !Number.isInteger(cardIndex) ||
+        cardIndex < 0 ||
+        cardIndex >= player.hand.length
+      ) {
+        return send(player.ws, {
+          type: "error",
+          message:
+            "Select a valid card to discard."
+        });
+      }
+
+      const [card] =
+        player.hand.splice(cardIndex, 1);
+
+      room.discard.push(card);
+
+      player.drawn = false;
+
+      // Empty hand = round win.
+      if (player.hand.length === 0) {
+        finishRound(room, player);
+        return;
+      }
+
+      nextTurn(room);
+      return;
+    }
+
+    // ---------- DECLARE ----------
+
+    if (msg.type === "declare") {
+      const index = room.players.indexOf(player);
+
+      if (
+        !room.started ||
+        room.turn !== index ||
+        player.out ||
+        player.drawn
+      ) {
+        return;
+      }
+
+      if (!validDeclaration(player.hand)) {
+        return send(player.ws, {
+          type: "error",
+          message:
+            "Invalid declaration. Need 2 sequences, including 1 pure sequence."
+        });
+      }
+
+      finishRound(room, player);
+      return;
+    }
+
+    // ---------- CHAT ----------
+
+    if (msg.type === "chat") {
+      const text =
+        String(msg.text || "")
+          .trim()
+          .slice(0, 160);
+
+      if (text) {
+        broadcast(room, {
+          type: "chat",
+          name: player.name,
+          text
+        });
+      }
+    }
+  });
+
+  ws.on("close", () => {
+    if (
+      room &&
+      player &&
+      player.ws === ws
+    ) {
+      disconnectPlayer(room, player);
+    }
+  });
+});
+
+// ---------- WEBSOCKET HEARTBEAT ----------
+
 const heartbeat = setInterval(() => {
   for (const ws of wss.clients) {
     if (ws.isAlive === false) {
-      try {
-        ws.terminate();
-      } catch (_) {}
+      ws.terminate();
       continue;
     }
 
     ws.isAlive = false;
-
-    try {
-      ws.ping();
-    } catch (_) {}
+    ws.ping();
   }
-}, 25000);
+}, HEARTBEAT_MS);
 
 wss.on("close", () => {
+  clearInterval(heartbeat);
+});
+
+server.listen(PORT, () => {
+  console.log(
+    `Rummy 101 listening on port ${PORT}`
+  );
+});=> {
   clearInterval(heartbeat);
 });
 
